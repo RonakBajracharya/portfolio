@@ -1,14 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+
 import { Progress } from "@/components/ui/progress"
-import { Linkedin, Github, Award, Trophy } from "lucide-react"
+import { Linkedin, Github, Award, Trophy} from "lucide-react"
+import Contact from "./_component/Contact"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 
 export default function Portfolio() {
+  
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -550,49 +551,7 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="px-8 py-16 bg-slate-800/50 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-teal-500/5 to-transparent"></div>
-        <div className="max-w-4xl mx-auto relative z-10">
-          <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in-up">
-            Contact <span className="text-teal-400 animate-pulse">Me!</span>
-          </h2>
-          <form className="space-y-6 animate-fade-in-up delay-200">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                placeholder="Full Name"
-                className="bg-slate-800 border-teal-400/30 text-white placeholder:text-gray-400 focus:border-teal-400 transition-all duration-300 hover:border-teal-400/50 focus:shadow-lg focus:shadow-teal-500/25"
-              />
-              <Input
-                placeholder="Email Address"
-                type="email"
-                className="bg-slate-800 border-teal-400/30 text-white placeholder:text-gray-400 focus:border-teal-400 transition-all duration-300 hover:border-teal-400/50 focus:shadow-lg focus:shadow-teal-500/25"
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                placeholder="Mobile Number"
-                className="bg-slate-800 border-teal-400/30 text-white placeholder:text-gray-400 focus:border-teal-400 transition-all duration-300 hover:border-teal-400/50 focus:shadow-lg focus:shadow-teal-500/25"
-              />
-              <Input
-                placeholder="Email Subject"
-                className="bg-slate-800 border-teal-400/30 text-white placeholder:text-gray-400 focus:border-teal-400 transition-all duration-300 hover:border-teal-400/50 focus:shadow-lg focus:shadow-teal-500/25"
-              />
-            </div>
-            <Textarea
-              placeholder="Your Message"
-              rows={6}
-              className="bg-slate-800 border-teal-400/30 text-white placeholder:text-gray-400 focus:border-teal-400 transition-all duration-300 hover:border-teal-400/50 focus:shadow-lg focus:shadow-teal-500/25"
-            />
-            <div className="text-center">
-              <Button className="bg-teal-500 hover:bg-teal-600 text-white px-12 py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group">
-                <span className="relative z-10">Send Message</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-              </Button>
-            </div>
-          </form>
-        </div>
-      </section>
+    <Contact />
 
       {/* Footer */}
       <footer className="px-8 py-6 bg-slate-800 text-center relative">
