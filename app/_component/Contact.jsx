@@ -33,7 +33,7 @@ export default function Contact() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/contacts/form", {
+      const res = await fetch("https://charlie-backend-rtdr.onrender.com/contacts/form", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
