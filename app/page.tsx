@@ -87,7 +87,7 @@ export default function Portfolio() {
       </nav>
 
       {/* Hero Section */}
-      <section id="home" className="px-8 py-16 pt-24 relative">
+      <section id="home" className="px-8 py-16 pt-28 relative">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-pulse"></div>
@@ -110,12 +110,15 @@ export default function Portfolio() {
               driving impactful research on emerging threats. Passionate about enhancing security measures.
             </p>
             <div className="flex gap-4 animate-fade-in-up delay-500">
+                <a href="/mycv.pdf" target="_blank" rel="noopener noreferrer">
               <Button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group">
-                <span className="relative z-10">Hire Me</span>
+                <span className="relative z-10">View CV</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </Button>
+              </a>
               <Button
                 variant="outline"
+                onClick={() => scrollToSection("contact")}
                 className="border-teal-500 text-teal-400 hover:bg-teal-500 hover:text-white px-8 py-3 bg-transparent transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
               >
                 <span className="relative z-10">{"Let's Talk"}</span>
@@ -124,7 +127,7 @@ export default function Portfolio() {
             </div>
             <div className="flex gap-4 pt-8 animate-fade-in-up delay-700">
               <a
-                href="https://linkedin.com/in/ronak-bajracharya"
+                href="https://www.linkedin.com/in/ronak-bajracharya-886b48317/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full border-2 border-teal-400 flex items-center justify-center hover:bg-teal-400 hover:text-slate-900 transition-all duration-300 cursor-pointer transform hover:scale-110 hover:rotate-12 hover:shadow-lg hover:shadow-teal-500/50"
@@ -132,7 +135,7 @@ export default function Portfolio() {
                 <Linkedin size={20} />
               </a>
               <a
-                href="https://github.com/ronak-bajracharya"
+                href="https://github.com/RonakBajracharya"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full border-2 border-teal-400 flex items-center justify-center hover:bg-teal-400 hover:text-slate-900 transition-all duration-300 cursor-pointer transform hover:scale-110 hover:rotate-12 hover:shadow-lg hover:shadow-teal-500/50"
@@ -155,13 +158,13 @@ export default function Portfolio() {
             className={`relative transition-all duration-1000 delay-300 ${isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}
           >
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-teal-600 to-teal-400 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+              <div className="absolute -inset-1 "></div>
               <Image
                 src="/images/ronak-portrait.png"
                 alt="Ronak Bajracharya Portrait"
                 width={500}
                 height={600}
-                className="relative w-full max-w-md mx-auto rounded-lg transform hover:scale-105 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/25"
+                className="relative w-full max-w-md mx-auto rounded-lg transform hover:scale-105 transition-all duration-500 "
               />
             </div>
           </div>
@@ -194,10 +197,10 @@ export default function Portfolio() {
               vulnerability testing. Proficient in Linux and network monitoring, I thrive in collaborative environments,
               driving impactful research on emerging threats. Passionate about enhancing security measures.
             </p>
-            <Button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 animate-fade-in-up delay-500 relative overflow-hidden group">
+            {/* <Button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 animate-fade-in-up delay-500 relative overflow-hidden group">
               <span className="relative z-10">Read More</span>
               <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>
@@ -416,7 +419,7 @@ export default function Portfolio() {
                   <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
                   <div className="relative z-10">
                     <h4 className="text-xl font-semibold mb-2">Certified in Cybersecurity (CC)</h4>
-                    <p className="text-teal-400 text-sm mb-3">ISC² Certification</p>
+                    <p className="text-teal-400 text-sm mb-3">ISC² Certification <span><a className="text-white" target="_blank" rel="noopener noreferrer" href="https://www.credly.com/badges/b2dded5b-c577-4802-83cb-c10d10c4ab8b/public_url">Link</a></span></p>
                     <span className="text-teal-400 text-sm">February 27, 2025</span>
 
                     {expandedCard === "cert-1" && (
@@ -446,7 +449,8 @@ export default function Portfolio() {
                   <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
                   <div className="relative z-10">
                     <h4 className="text-xl font-semibold mb-2">Crime Investigation and Analysis</h4>
-                    <p className="text-teal-400 text-sm mb-3">Professional Certification</p>
+                    <p className="text-teal-400 text-sm mb-3">Professional Certification <span><a className="text-white" target="_blank" rel="noopener noreferrer" href="https://c4mpus.com/certificate/6493dc300c1d1c2cf49a2bb8">Link</a></span></p>
+                    
                     <span className="text-teal-400 text-sm">2024</span>
 
                     {expandedCard === "cert-2" && (
