@@ -1,395 +1,186 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-
 import { Progress } from "@/components/ui/progress"
-import { Linkedin, Github, Award, Trophy} from "lucide-react"
+import { Linkedin, Github, Award, Trophy } from "lucide-react"
 import Contact from "./_component/Contact"
+import Navbar from "@/components/navbar"
 import Image from "next/image"
+import Link from "next/link"
 import { useState, useEffect } from "react"
+import type { SiteConfig, Writeup } from "@/lib/db"
+
+const defaultConfig: SiteConfig = {
+  hero: { name: "", title: "", description: "", cvUrl: "", portraitUrl: "" },
+  about: { heading: "", description: "", portraitUrl: "" },
+  social: { linkedin: "", github: "", medium: "" },
+  skills: [], education: [], experience: [], certifications: [], achievements: [],
+}
 
 export default function Portfolio() {
-  
+  const [config, setConfig] = useState<SiteConfig>(defaultConfig)
+  const [writeups, setWriteups] = useState<Writeup[]>([])
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
+    fetch("/api/site").then(r => r.json()).then(setConfig).catch(() => {})
+    fetch("/api/writeups").then(r => r.json()).then(setWriteups).catch(() => {})
   }, [])
 
-  const toggleCard = (cardId: string) => {
-    setExpandedCard(expandedCard === cardId ? null : cardId)
+  const toggleCard = (id: string) => setExpandedCard(expandedCard === id ? null : id)
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: "smooth" })
   }
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      const navHeight = 80 // Height of fixed navigation
-      const elementPosition = element.offsetTop - navHeight
-      window.scrollTo({
-        top: elementPosition,
-        behavior: "smooth",
-      })
-    }
-  }
+  const socials = [
+    { href: config.social.linkedin, icon: Linkedin },
+    { href: config.social.github, icon: Github },
+    { href: config.social.medium, icon: () => (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+    )},
+  ]
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="flex items-center justify-between px-8 py-6 fixed top-0 left-0 right-0 bg-slate-900/95 backdrop-blur-sm z-50 border-b border-slate-800 transition-all duration-300">
-        <div className="text-2xl font-bold text-teal-400 hover:scale-110 transition-transform duration-300 cursor-pointer">
-          Ronak.
-        </div>
-        <div className="hidden md:flex space-x-8">
-          <button
-            onClick={() => scrollToSection("home")}
-            className="text-teal-400 hover:text-teal-300 transition-all duration-300 hover:scale-105 relative group"
-          >
-            Home
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button
-            onClick={() => scrollToSection("about")}
-            className="hover:text-teal-400 transition-all duration-300 hover:scale-105 relative group"
-          >
-            About
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button
-            onClick={() => scrollToSection("education")}
-            className="hover:text-teal-400 transition-all duration-300 hover:scale-105 relative group"
-          >
-            Education
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button
-            onClick={() => scrollToSection("skills")}
-            className="hover:text-teal-400 transition-all duration-300 hover:scale-105 relative group"
-          >
-            Skills
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button
-            onClick={() => scrollToSection("certifications")}
-            className="hover:text-teal-400 transition-all duration-300 hover:scale-105 relative group"
-          >
-            Certifications
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-          </button>
-          <button
-            onClick={() => scrollToSection("contact")}
-            className="hover:text-teal-400 transition-all duration-300 hover:scale-105 relative group"
-          >
-            Contact
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-          </button>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <Navbar />
 
-      {/* Hero Section */}
-      <section id="home" className="px-8 py-16 pt-28 relative">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
-          <div
-            className={`space-y-6 transition-all duration-1000 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"}`}
-          >
-            <h1 className="text-5xl md:text-6xl font-bold animate-fade-in-up">
-              {"Hi, I'm"} <span className="text-teal-400 animate-pulse">Ronak Bajracharya</span>
+      {/* Hero */}
+      <section id="home" className="relative px-6 pt-32 pb-24 halftone">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center relative z-10">
+          <div className={`space-y-6 transition-all duration-1000 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}`}>
+            <p className="text-xs font-medium text-muted-foreground tracking-widest uppercase">{config.hero.title}</p>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-none">
+              {config.hero.name || "Hello"}
             </h1>
-            <h2 className="text-2xl text-teal-400 font-semibold animate-fade-in-up delay-200">
-              Cybersecurity Professional
-            </h2>
-            <p className="text-gray-300 text-lg leading-relaxed max-w-lg animate-fade-in-up delay-300">
-              Dynamic cybersecurity professional with hands-on experience, excelling in security assessments and
-              vulnerability testing. Proficient in Linux and network monitoring, I thrive in collaborative environments,
-              driving impactful research on emerging threats. Passionate about enhancing security measures.
-            </p>
-            <div className="flex gap-4 animate-fade-in-up delay-500">
-                <a href="/mycv.pdf" target="_blank" rel="noopener noreferrer">
-              <Button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group">
-                <span className="relative z-10">View CV</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-              </Button>
+            <p className="text-muted-foreground text-lg leading-relaxed max-w-lg">{config.hero.description}</p>
+            <div className="flex gap-4 pt-2">
+              <a href={config.hero.cvUrl} target="_blank" rel="noopener noreferrer">
+                <Button className="bg-foreground hover:bg-foreground/90 text-background font-medium px-8 py-6 rounded-xl transition-all duration-300">
+                  View CV
+                </Button>
               </a>
-              <Button
-                variant="outline"
-                onClick={() => scrollToSection("contact")}
-                className="border-teal-500 text-teal-400 hover:bg-teal-500 hover:text-white px-8 py-3 bg-transparent transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-              >
-                <span className="relative z-10">{"Let's Talk"}</span>
-                <div className="absolute inset-0 bg-teal-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              <Button variant="outline" onClick={() => scrollTo("contact")}
+                className="border-border text-foreground hover:bg-secondary px-8 py-6 rounded-xl bg-transparent transition-all duration-300">
+                Let&apos;s Talk
               </Button>
             </div>
-            <div className="flex gap-4 pt-8 animate-fade-in-up delay-700">
-              <a
-                href="https://www.linkedin.com/in/ronak-bajracharya-886b48317/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full border-2 border-teal-400 flex items-center justify-center hover:bg-teal-400 hover:text-slate-900 transition-all duration-300 cursor-pointer transform hover:scale-110 hover:rotate-12 hover:shadow-lg hover:shadow-teal-500/50"
-              >
-                <Linkedin size={20} />
-              </a>
-              <a
-                href="https://github.com/RonakBajracharya"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full border-2 border-teal-400 flex items-center justify-center hover:bg-teal-400 hover:text-slate-900 transition-all duration-300 cursor-pointer transform hover:scale-110 hover:rotate-12 hover:shadow-lg hover:shadow-teal-500/50"
-              >
-                <Github size={20} />
-              </a>
-              <a
-                href="https://cyancharley.medium.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full border-2 border-teal-400 flex items-center justify-center hover:bg-teal-400 hover:text-slate-900 transition-all duration-300 cursor-pointer transform hover:scale-110 hover:rotate-12 hover:shadow-lg hover:shadow-teal-500/50"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z" />
-                </svg>
-              </a>
+            <div className="flex gap-3 pt-6">
+              {socials.map((s, i) => (
+                <a key={i} href={s.href} target="_blank" rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-all duration-200">
+                  <s.icon size={16} />
+                </a>
+              ))}
             </div>
           </div>
-          <div
-            className={`relative transition-all duration-1000 delay-300 ${isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}
-          >
-            <div className="relative group">
-              <div className="absolute -inset-1 "></div>
-              <Image
-                src="/images/ronak-portrait.png"
-                alt="Ronak Bajracharya Portrait"
-                width={500}
-                height={600}
-                className="relative w-full max-w-md mx-auto rounded-lg transform hover:scale-105 transition-all duration-500 "
-              />
-            </div>
+          <div className={`relative transition-all duration-1000 delay-200 ${isVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}>
+            {config.hero.portraitUrl ? (
+              <Image src={config.hero.portraitUrl} alt={config.hero.name} width={500} height={600} className="relative w-full max-w-sm mx-auto rounded-2xl grayscale" />
+            ) : (
+              <div className="relative w-full max-w-sm mx-auto rounded-2xl bg-secondary aspect-[5/6] flex items-center justify-center border border-border">
+                <span className="text-muted-foreground text-sm">Portrait</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="px-8 py-16 bg-slate-800/50 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-teal-500/5 to-transparent"></div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl font-bold mb-12 animate-fade-in-up">
-            About <span className="text-teal-400 animate-pulse">Me</span>
-          </h2>
-          <div className="mb-8">
-            <div className="w-32 h-32 mx-auto rounded-full border-4 border-teal-400 overflow-hidden mb-6 relative group animate-fade-in-up delay-200">
-              <div className="absolute -inset-1 bg-gradient-to-r from-teal-600 to-teal-400 rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000"></div>
-              <Image
-                src="/images/ronak-portrait.png"
-                alt="Ronak Bajracharya"
-                width={128}
-                height={128}
-                className="relative w-full h-full object-cover transform hover:scale-110 transition-all duration-500"
-              />
-            </div>
-            <h3 className="text-2xl font-bold text-teal-400 mb-4 animate-fade-in-up delay-300">
-              Cybersecurity Professional!
-            </h3>
-            <p className="text-gray-300 leading-relaxed max-w-2xl mx-auto mb-8 animate-fade-in-up delay-400">
-              Dynamic cybersecurity professional with hands-on experience, excelling in security assessments and
-              vulnerability testing. Proficient in Linux and network monitoring, I thrive in collaborative environments,
-              driving impactful research on emerging threats. Passionate about enhancing security measures.
-            </p>
-            {/* <Button className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 transform hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 animate-fade-in-up delay-500 relative overflow-hidden group">
-              <span className="relative z-10">Read More</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-            </Button> */}
+      {/* About */}
+      <section id="about" className="px-6 py-24 border-y border-border bg-secondary/30">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-6 tracking-tight">About</h2>
+          <div className="w-20 h-20 mx-auto rounded-2xl border border-border overflow-hidden mb-8">
+            {config.about.portraitUrl ? (
+              <Image src={config.about.portraitUrl} alt="" width={80} height={80} className="w-full h-full object-cover grayscale" />
+            ) : (
+              <div className="w-full h-full bg-secondary flex items-center justify-center text-muted-foreground text-xs">Photo</div>
+            )}
           </div>
+          <h3 className="text-xl font-semibold mb-4">{config.about.heading}</h3>
+          <p className="text-muted-foreground leading-relaxed text-lg">{config.about.description}</p>
         </div>
       </section>
 
-      {/* Journey Section */}
-      <section id="education" className="px-8 py-16 relative">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in-up">
-            My <span className="text-teal-400 animate-pulse">Journey</span>
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Education */}
-            <div className="animate-fade-in-up delay-200">
-              <h3 className="text-2xl font-bold mb-8 text-teal-400">Education</h3>
-              <div className="space-y-6">
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("education-1")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">BSC.(HONS): ETHICAL HACKING AND CYBER SECURITY</h4>
-                    <p className="text-teal-400 text-sm mb-3">Softwarica College of IT and E-commerce</p>
-                    <span className="text-teal-400 text-sm">01/2024, Dillibazar</span>
-
-                    {expandedCard === "education-1" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">Key Coursework & Achievements:</h5>
-                        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                          <li>Advanced Penetration Testing and Vulnerability Assessment</li>
-                          <li>Digital Forensics and Incident Response</li>
-                          <li>Cryptography and Secure Communications</li>
-                          <li>Network Security and Monitoring</li>
-                          <li>Malware Analysis and Reverse Engineering</li>
-                          <li>Ethical Hacking Methodologies</li>
-                        </ul>
-                        <div className="mt-3">
-                          <p className="text-gray-300 text-sm">
-                            <strong>Specialization:</strong> Focused on practical cybersecurity applications with
-                            hands-on experience in security testing, threat analysis, and defensive security measures.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+      {/* Journey */}
+      <section id="education" className="px-6 py-24">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">Journey</h2>
+          <div className="grid md:grid-cols-2 gap-16">
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-widest uppercase mb-8">Education</h3>
+              <div className="space-y-4">
+                {config.education.map(e => <JourneyCard key={e.id} {...e} expanded={expandedCard} onToggle={toggleCard} />)}
               </div>
             </div>
-
-            {/* Experience */}
-            <div className="animate-fade-in-up delay-400">
-              <h3 className="text-2xl font-bold mb-8 text-teal-400">Experience</h3>
-              <div className="space-y-6">
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("experience-1")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">Associate Security Research Analyst</h4>
-                    <p className="text-teal-400 text-sm mb-3">SecurityPal AI</p>
-                    <span className="text-teal-400 text-sm">12/2024 to 06/2025, Kathmandu</span>
-
-                    {expandedCard === "experience-1" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">Key Responsibilities:</h5>
-                        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                          <li>
-                            Conducted in-depth security assessments and risk analyses to identify vulnerabilities across
-                            client environments
-                          </li>
-                          <li>Researched and documented emerging threats, including cloud misconfigurations</li>
-                          <li>Collaborated with cross-functional teams to ensure accuracy of research results</li>
-                          <li>Analyzed trends in cybersecurity threats and vulnerabilities</li>
-                          <li>Developed comprehensive security reports and recommendations</li>
-                        </ul>
-                        <div className="mt-3">
-                          <p className="text-gray-300 text-sm">
-                            <strong>Impact:</strong> Successfully identified critical vulnerabilities in 50+ client
-                            environments, contributing to enhanced security posture and threat mitigation strategies.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("experience-2")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">Cybersecurity Intern</h4>
-                    <p className="text-teal-400 text-sm mb-3">Centre for Sustainable Development Studies</p>
-                    <span className="text-teal-400 text-sm">08/2024 to 10/2024, Kathmandu</span>
-
-                    {expandedCard === "experience-2" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">Key Responsibilities:</h5>
-                        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                          <li>Helped in the VAPT test of websites and web applications</li>
-                          <li>Carried out research for automation and QA testing of web applications</li>
-                          <li>Assisted in monitoring network security for potential threats and vulnerabilities</li>
-                          <li>Participated in security awareness training sessions</li>
-                          <li>Documented security findings and remediation strategies</li>
-                        </ul>
-                        <div className="mt-3">
-                          <p className="text-gray-300 text-sm">
-                            <strong>Learning Outcomes:</strong> Gained practical experience in vulnerability assessment,
-                            penetration testing methodologies, and network security monitoring in a real-world
-                            environment.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-widest uppercase mb-8">Experience</h3>
+              <div className="space-y-4">
+                {config.experience.map(e => <JourneyCard key={e.id} {...e} type="exp" expanded={expandedCard} onToggle={toggleCard} />)}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Skills Section */}
-      <section id="skills" className="px-8 py-16 bg-slate-800/50 relative">
-        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-teal-500/5 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in-up">
-            My <span className="text-teal-400 animate-pulse">Skills</span>
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Technical Skills */}
-            <div className="animate-fade-in-up delay-200">
-              <h3 className="text-2xl font-bold mb-8 text-teal-400">Technical Skills</h3>
-              <div className="space-y-6">
-                {[
-                  { skill: "Linux Proficiency", percentage: 95 },
-                  { skill: "Network Monitoring", percentage: 90 },
-                  { skill: "Security Assessments", percentage: 85 },
-                  { skill: "Cryptography", percentage: 80 },
-                  { skill: "Vulnerability Testing", percentage: 85 },
-                ].map((item, index) => (
-                  <div
-                    key={item.skill}
-                    className="animate-fade-in-up"
-                    style={{ animationDelay: `${300 + index * 100}ms` }}
-                  >
-                    <div className="flex justify-between mb-2">
-                      <span className="font-semibold">{item.skill}</span>
-                      <span className="text-teal-400">{item.percentage}%</span>
-                    </div>
-                    <div className="relative">
-                      <Progress
-                        value={item.percentage}
-                        className="h-2 bg-slate-700 [&>div]:bg-teal-400 [&>div]:transition-all [&>div]:duration-1000 [&>div]:ease-out hover:[&>div]:shadow-lg hover:[&>div]:shadow-teal-500/50"
-                      />
-                    </div>
+      {/* Skills */}
+      <section id="skills" className="px-6 py-24 border-y border-border bg-secondary/30 halftone">
+        <div className="max-w-3xl mx-auto relative z-10">
+          <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">Skills</h2>
+          <div className="grid md:grid-cols-2 gap-x-16 gap-y-6">
+            {config.skills.map(item => (
+              <div key={item.name}>
+                <div className="flex justify-between mb-2 text-sm">
+                  <span className="font-medium">{item.name}</span>
+                  <span className="text-muted-foreground">{item.percentage}%</span>
+                </div>
+                <Progress value={item.percentage} className="h-1 bg-border [&>div]:bg-foreground [&>div]:transition-all [&>div]:duration-700" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Certs & Achievements */}
+      <section id="certifications" className="px-6 py-24">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">Certifications &amp; Achievements</h2>
+          <div className="grid md:grid-cols-2 gap-16">
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-widest uppercase mb-8 flex items-center gap-2"><Award size={16} /> Certifications</h3>
+              <div className="space-y-4">
+                {config.certifications.map(c => (
+                  <div key={c.id} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all cursor-pointer bg-background" onClick={() => toggleCard(c.id)}>
+                    <h4 className="font-semibold mb-1">{c.title}</h4>
+                    <p className="text-sm text-muted-foreground mb-1">{c.issuer}{c.link && <a className="underline ml-1" href={c.link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>{c.linkText || "Link"}</a>}</p>
+                    <span className="text-xs text-muted-foreground">{c.date}</span>
+                    {expandedCard === c.id && (
+                      <div className="mt-4 pt-4 border-t border-border space-y-2">
+                        <h5 className="text-sm font-semibold">{c.details.heading}</h5>
+                        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">{c.details.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
+                        <p className="text-sm text-foreground/60">{c.details.summary}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* Professional Skills */}
-            <div className="animate-fade-in-up delay-400">
-              <h3 className="text-2xl font-bold mb-8 text-teal-400">Professional Skills</h3>
-              <div className="space-y-6">
-                {[
-                  { skill: "Digital Forensics", percentage: 90 },
-                  { skill: "Risk Analysis", percentage: 85 },
-                  { skill: "Threat Research", percentage: 80 },
-                  { skill: "VAPT Testing", percentage: 75 },
-                  { skill: "Malware Analysis", percentage: 70 },
-                ].map((item, index) => (
-                  <div
-                    key={item.skill}
-                    className="animate-fade-in-up"
-                    style={{ animationDelay: `${500 + index * 100}ms` }}
-                  >
-                    <div className="flex justify-between mb-2">
-                      <span className="font-semibold">{item.skill}</span>
-                      <span className="text-teal-400">{item.percentage}%</span>
-                    </div>
-                    <div className="relative">
-                      <Progress
-                        value={item.percentage}
-                        className="h-2 bg-slate-700 [&>div]:bg-teal-400 [&>div]:transition-all [&>div]:duration-1000 [&>div]:ease-out hover:[&>div]:shadow-lg hover:[&>div]:shadow-teal-500/50"
-                      />
-                    </div>
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-widest uppercase mb-8 flex items-center gap-2"><Trophy size={16} /> CTF Achievements</h3>
+              <div className="space-y-4">
+                {config.achievements.map(a => (
+                  <div key={a.id} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all cursor-pointer bg-background" onClick={() => toggleCard(a.id)}>
+                    <h4 className="font-semibold mb-1">{a.title}</h4>
+                    <p className="text-sm text-muted-foreground mb-1">{a.subtitle}</p>
+                    <span className="text-xs text-muted-foreground">{a.period}</span>
+                    {expandedCard === a.id && (
+                      <div className="mt-4 pt-4 border-t border-border space-y-2">
+                        <h5 className="text-sm font-semibold">{a.details.heading}</h5>
+                        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">{a.details.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -398,228 +189,60 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Certifications and Achievements Section */}
-      <section id="certifications" className="px-8 py-16 relative">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 animate-fade-in-up">
-            Certifications & <span className="text-teal-400 animate-pulse">Achievements</span>
-          </h2>
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Certifications */}
-            <div className="animate-fade-in-up delay-200">
-              <h3 className="text-2xl font-bold mb-8 text-teal-400 flex items-center gap-2">
-                <Award size={24} className="animate-bounce" />
-                Certifications
-              </h3>
-              <div className="space-y-6">
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("cert-1")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">Certified in Cybersecurity (CC)</h4>
-                    <p className="text-teal-400 text-sm mb-3">ISC² Certification <span><a className="text-white" target="_blank" rel="noopener noreferrer" href="https://www.credly.com/badges/b2dded5b-c577-4802-83cb-c10d10c4ab8b/public_url">Link</a></span></p>
-                    <span className="text-teal-400 text-sm">February 27, 2025</span>
-
-                    {expandedCard === "cert-1" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">Certification Details:</h5>
-                        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                          <li>Entry-level cybersecurity certification from ISC²</li>
-                          <li>Covers fundamental security principles and practices</li>
-                          <li>Validates knowledge in risk management, security controls, and incident response</li>
-                          <li>Demonstrates commitment to cybersecurity best practices</li>
-                        </ul>
-                        <div className="mt-3">
-                          <p className="text-gray-300 text-sm">
-                            <strong>Skills Validated:</strong> Security principles, risk management, network security,
-                            access controls, and security operations.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("cert-2")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">Crime Investigation and Analysis</h4>
-                    <p className="text-teal-400 text-sm mb-3">Professional Certification <span><a className="text-white" target="_blank" rel="noopener noreferrer" href="https://c4mpus.com/certificate/6493dc300c1d1c2cf49a2bb8">Link</a></span></p>
-                    
-                    <span className="text-teal-400 text-sm">2024</span>
-
-                    {expandedCard === "cert-2" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">Certification Details:</h5>
-                        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                          <li>Specialized training in digital crime investigation techniques</li>
-                          <li>Evidence collection and preservation methodologies</li>
-                          <li>Forensic analysis of digital artifacts</li>
-                          <li>Legal aspects of cybercrime investigation</li>
-                        </ul>
-                        <div className="mt-3">
-                          <p className="text-gray-300 text-sm">
-                            <strong>Skills Validated:</strong> Digital forensics, evidence handling, crime scene
-                            analysis, and investigative procedures.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+      {/* Writeups preview */}
+      {writeups.length > 0 && (
+        <section className="px-6 py-24 border-y border-border bg-secondary/30">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-4xl font-bold tracking-tight">Writeups</h2>
+              <Link href="/writeups" className="text-sm text-muted-foreground hover:text-foreground transition-colors">View All &rarr;</Link>
             </div>
-
-            {/* Achievements */}
-            <div className="animate-fade-in-up delay-400">
-              <h3 className="text-2xl font-bold mb-8 text-teal-400 flex items-center gap-2">
-                <Trophy size={24} className="animate-bounce delay-500" />
-                CTF Achievements
-              </h3>
-              <div className="space-y-6">
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("achievement-1")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">Multiple CTF Participations</h4>
-                    <p className="text-teal-400 text-sm mb-3">Capture The Flag Competitions</p>
-                    <span className="text-teal-400 text-sm">2024 - 2025</span>
-
-                    {expandedCard === "achievement-1" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">CTF Events Participated:</h5>
-                        <ul className="text-gray-300 text-sm space-y-1 list-disc list-inside">
-                          <li>
-                            <strong>KU CTF 2024</strong> - Kathmandu University Capture The Flag competition
-                          </li>
-                          <li>
-                            <strong>INTIGRITI CTF 2024</strong> - International cybersecurity competition
-                          </li>
-                          <li>
-                            <strong>L34K CTF 2025</strong> - Advanced penetration testing challenges
-                          </li>
-                          <li>Multiple other regional and international CTF events</li>
-                        </ul>
-                        <div className="mt-3">
-                          <p className="text-gray-300 text-sm">
-                            <strong>Skills Demonstrated:</strong> Web exploitation, cryptography, reverse engineering,
-                            forensics, and penetration testing across various platforms and scenarios.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+            <div className="grid md:grid-cols-3 gap-6">
+              {writeups.slice(0, 3).map(w => (
+                <Link key={w.id} href={`/writeups/${w.id}`} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{w.category}</span>
+                    <span className="text-xs text-muted-foreground">{w.date}</span>
                   </div>
-                </div>
-
-                <div
-                  className="border border-teal-400/30 rounded-lg p-6 hover:border-teal-400 transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25 relative overflow-hidden group"
-                  onClick={() => toggleCard("achievement-2")}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                  <div className="relative z-10">
-                    <h4 className="text-xl font-semibold mb-2">Research Projects</h4>
-                    <p className="text-teal-400 text-sm mb-3">Academic & Professional Research</p>
-                    <span className="text-teal-400 text-sm">2024 - Present</span>
-
-                    {expandedCard === "achievement-2" && (
-                      <div className="mt-4 pt-4 border-t border-teal-400/20 animate-fade-in-down">
-                        <h5 className="font-semibold text-teal-400 mb-2">Notable Projects:</h5>
-                        <ul className="text-gray-300 text-sm space-y-2 list-disc list-inside">
-                          <li>
-                            <strong>Quantum Resistant Cryptographic Measures:</strong> Researched and developed
-                            prototype cryptographic system using quantum resistant key exchange protocols
-                          </li>
-                          <li>
-                            <strong>Network Architecture Development:</strong> Designed secure network architecture with
-                            VPN implementation and advanced routing protocols
-                          </li>
-                          <li>
-                            <strong>Malware Analysis & Exploit Development:</strong> Static and dynamic malware analysis
-                            with vulnerability research and exploit development
-                          </li>
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                  <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{w.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{w.event}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{w.summary}</p>
+                </Link>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-    <Contact />
+      <Contact />
 
-      {/* Footer */}
-      <footer className="px-8 py-6 bg-slate-800 text-center relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-teal-500/5 to-transparent"></div>
-        <p className="text-gray-400 relative z-10 animate-fade-in-up">© 2024 Ronak Bajracharya. All rights reserved.</p>
+      <footer className="px-6 py-8 border-t border-border text-center">
+        <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} {config.hero.name}</p>
       </footer>
-
-      <style jsx>{`
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fade-in-down {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in-up {
-          animation: fade-in-up 0.8s ease-out forwards;
-        }
-
-        .animate-fade-in-down {
-          animation: fade-in-down 0.5s ease-out forwards;
-        }
-
-        .delay-200 {
-          animation-delay: 200ms;
-        }
-
-        .delay-300 {
-          animation-delay: 300ms;
-        }
-
-        .delay-400 {
-          animation-delay: 400ms;
-        }
-
-        .delay-500 {
-          animation-delay: 500ms;
-        }
-
-        .delay-700 {
-          animation-delay: 700ms;
-        }
-      `}</style>
     </div>
   )
 }
 
-// Contact Information:
-// Location: Kathmandu, Nepal
-// Phone: +9779864236214
-// Email: rbaz9864@gmail.com
-// Website: cyancharley.medium.com
+function JourneyCard({ id, degree, role, institution, company, period, location, details, expanded, onToggle }: {
+  id: string; degree?: string; role?: string; institution?: string; company?: string
+  period: string; location: string
+  details: { heading: string; items: string[]; summary: string }
+  expanded: string | null; onToggle: (id: string) => void; type?: string
+}) {
+  const title = degree || role || ""
+  const subtitle = institution || company || ""
+  return (
+    <div className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all cursor-pointer bg-background" onClick={() => onToggle(id)}>
+      <h4 className="font-semibold mb-1">{title}</h4>
+      <p className="text-sm text-muted-foreground mb-1">{subtitle}</p>
+      <span className="text-xs text-muted-foreground">{period} &mdash; {location}</span>
+      {expanded === id && (
+        <div className="mt-4 pt-4 border-t border-border space-y-2">
+          <h5 className="text-sm font-semibold">{details.heading}</h5>
+          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">{details.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
+          <p className="text-sm text-foreground/60">{details.summary}</p>
+        </div>
+      )}
+    </div>
+  )
+}
