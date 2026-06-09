@@ -530,6 +530,29 @@ async function initDatabase() {
       `
     }
   }
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS blog (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      content TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '[]',
+      date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  const bCount = await sql`SELECT COUNT(*)::int as count FROM blog` as Record<string, unknown>[]
+  if (bCount[0] && (bCount[0] as { count: number }).count === 0) {
+    for (const b of defaultBlogPosts) {
+      await sql`
+        INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at)
+        VALUES (${b.id}, ${b.title}, ${b.summary}, ${b.content}, ${JSON.stringify(b.tags)}, ${b.date}, ${b.createdAt}, ${b.updatedAt})
+      `
+    }
+  }
 }
 
 // ---- File-based fallback ----
@@ -811,5 +834,122 @@ export async function deleteGalleryItem(id: string): Promise<boolean> {
   if (index === -1) return false
   items.splice(index, 1)
   await writeFile("gallery.json", items)
+  return true
+}
+
+// ---- Blog ----
+
+export interface BlogPost {
+  id: string
+  title: string
+  summary: string
+  content: string
+  tags: string[]
+  date: string
+  createdAt: string
+  updatedAt: string
+}
+
+const defaultBlogPosts: BlogPost[] = [
+  {
+    id: "b1",
+    title: "Getting Started in Cybersecurity",
+    summary: "A beginner's guide to breaking into the cybersecurity field — what to learn first, certifications, and building a home lab.",
+    content: "<p>Cybersecurity is one of the fastest-growing fields in tech, and for good reason — every organization needs security professionals. Here's how to start.</p><h2>Learn the Fundamentals</h2><p>Start with networking basics (TCP/IP, DNS, HTTP), operating systems (Linux especially), and basic programming (Python). These fundamentals will serve you throughout your career.</p><h2>Build a Home Lab</h2><p>Set up virtual machines, practice with Kali Linux, and use platforms like TryHackMe and HackTheBox. Hands-on experience is more valuable than any certification.</p><h2>Get Certified</h2><p>Start with CompTIA Security+, then move to specialized certs like OSCP or CISSP depending on your focus area.</p>",
+    tags: ["career", "beginners", "learning"],
+    date: "2025-01-10",
+    createdAt: "2025-01-10T00:00:00Z",
+    updatedAt: "2025-01-10T00:00:00Z",
+  },
+  {
+    id: "b2",
+    title: "Why Privacy Matters in the Age of AI",
+    summary: "As AI systems become more powerful, protecting personal data and understanding privacy implications is critical for security professionals.",
+    content: "<p>AI models are trained on massive datasets — often containing personal information. As security professionals, we need to understand the privacy implications.</p><h2>Data Collection</h2><p>Most AI systems collect far more data than necessary. Understanding what data is being collected and how it's used is the first step to protecting privacy.</p><h2>Practical Steps</h2><p>Use encryption everywhere, minimize data collection, implement proper access controls, and stay informed about privacy regulations like GDPR and CCPA.</p>",
+    tags: ["privacy", "AI", "data-protection"],
+    date: "2025-03-22",
+    createdAt: "2025-03-22T00:00:00Z",
+    updatedAt: "2025-03-22T00:00:00Z",
+  },
+]
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const rows = await sql`SELECT * FROM blog ORDER BY created_at DESC` as Record<string, unknown>[]
+    return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
+      id: r.id as string, title: r.title as string, summary: r.summary as string,
+      content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+    }))
+  }
+  return readFile<BlogPost[]>("blog.json", defaultBlogPosts)
+}
+
+export async function getBlogPostById(id: string): Promise<BlogPost | null> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const rows = await sql`SELECT * FROM blog WHERE id = ${id}` as Record<string, unknown>[]
+    if (rows.length === 0) return null
+    const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+    return {
+      id: r.id as string, title: r.title as string, summary: r.summary as string,
+      content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+    }
+  }
+  const posts = await getBlogPosts()
+  return posts.find((p) => p.id === id) || null
+}
+
+export async function createBlogPost(data: Omit<BlogPost, "id" | "createdAt" | "updatedAt">): Promise<BlogPost> {
+  const now = new Date().toISOString()
+  const id = "b" + String(Date.now())
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
+    return { ...data, id, createdAt: now, updatedAt: now }
+  }
+  const posts = await getBlogPosts()
+  const np: BlogPost = { ...data, id, createdAt: now, updatedAt: now } as BlogPost
+  posts.push(np)
+  await writeFile("blog.json", posts)
+  return np
+}
+
+export async function updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost | null> {
+  const now = new Date().toISOString()
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const existing = await getBlogPostById(id)
+    if (!existing) return null
+    const merged = { ...existing, ...updates, updatedAt: now }
+    await sql`UPDATE blog SET title = ${merged.title}, summary = ${merged.summary}, content = ${merged.content}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
+    return merged
+  }
+  const posts = await getBlogPosts()
+  const index = posts.findIndex((p) => p.id === id)
+  if (index === -1) return null
+  posts[index] = { ...posts[index], ...updates, id: posts[index].id, updatedAt: now }
+  await writeFile("blog.json", posts)
+  return posts[index]
+}
+
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`DELETE FROM blog WHERE id = ${id}`
+    return true
+  }
+  const posts = await getBlogPosts()
+  const index = posts.findIndex((p) => p.id === id)
+  if (index === -1) return false
+  posts.splice(index, 1)
+  await writeFile("blog.json", posts)
   return true
 }

@@ -9,6 +9,7 @@ import { LayoutDashboard, BookOpen, Image, FileText, LogOut, Menu, X } from "luc
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/content", label: "Content", icon: FileText },
+  { href: "/admin/blog", label: "Blog", icon: BookOpen },
   { href: "/admin/writeups", label: "Writeups", icon: BookOpen },
   { href: "/admin/gallery", label: "Gallery", icon: Image },
 ]

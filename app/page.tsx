@@ -8,7 +8,7 @@ import Navbar from "@/components/navbar"
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import type { SiteConfig, Writeup } from "@/lib/db"
+import type { SiteConfig, BlogPost } from "@/lib/db"
 
 const defaultConfig: SiteConfig = {
   hero: { name: "", title: "", description: "", cvUrl: "", portraitUrl: "" },
@@ -19,14 +19,14 @@ const defaultConfig: SiteConfig = {
 
 export default function Portfolio() {
   const [config, setConfig] = useState<SiteConfig>(defaultConfig)
-  const [writeups, setWriteups] = useState<Writeup[]>([])
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
     fetch("/api/site").then(r => r.json()).then(setConfig).catch(() => {})
-    fetch("/api/writeups").then(r => r.json()).then(setWriteups).catch(() => {})
+    fetch("/api/blog").then(r => r.json()).then(setBlogPosts).catch(() => {})
   }, [])
 
   const toggleCard = (id: string) => setExpandedCard(expandedCard === id ? null : id)
@@ -110,7 +110,7 @@ export default function Portfolio() {
       </section>
 
       {/* Skills */}
-      <section id="skills" className="px-6 py-24 border-y border-border bg-secondary/30 halftone">
+      <section id="skills" className="px-6 py-24">
         <div className="max-w-3xl mx-auto relative z-10">
           <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">Skills</h2>
           <div className="grid md:grid-cols-2 gap-x-16 gap-y-6">
@@ -128,7 +128,7 @@ export default function Portfolio() {
       </section>
 
       {/* Certs & Achievements */}
-      <section id="certifications" className="px-6 py-24">
+      <section id="certifications" className="px-6 py-24 bg-secondary/30 border-y border-border">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">Certifications &amp; Achievements</h2>
           <div className="grid md:grid-cols-2 gap-16">
@@ -173,24 +173,21 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Writeups preview */}
-      {writeups.length > 0 && (
-        <section className="px-6 py-24 border-y border-border bg-secondary/30">
+      {/* Blog preview */}
+      {blogPosts.length > 0 && (
+        <section className="px-6 py-24">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl font-bold tracking-tight">Writeups</h2>
-              <Link href="/writeups" className="text-sm text-muted-foreground hover:text-foreground transition-colors">View All &rarr;</Link>
+              <h2 className="text-4xl font-bold tracking-tight">Blog</h2>
+              <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">View All &rarr;</Link>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
-              {writeups.slice(0, 3).map(w => (
-                <Link key={w.id} href={`/writeups/${w.id}`} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{w.category}</span>
-                    <span className="text-xs text-muted-foreground">{w.date}</span>
-                  </div>
-                  <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{w.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{w.event}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{w.summary}</p>
+              {blogPosts.slice(0, 3).map(p => (
+                <Link key={p.id} href={`/blog/${p.id}`} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
+                  {p.tags.length > 0 && <div className="flex flex-wrap gap-1 mb-3">{p.tags.slice(0, 2).map(t => <span key={t} className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{t}</span>)}</div>}
+                  <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{p.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-3">{p.summary}</p>
+                  <span className="text-xs text-muted-foreground mt-3 block">{p.date}</span>
                 </Link>
               ))}
             </div>

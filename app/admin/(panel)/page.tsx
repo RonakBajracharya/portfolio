@@ -5,23 +5,33 @@ import Link from "next/link"
 import { BookOpen, Image, FileText } from "lucide-react"
 
 interface Stats {
+  blog: number
   writeups: number
   gallery: number
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({ writeups: 0, gallery: 0 })
+  const [stats, setStats] = useState<Stats>({ blog: 0, writeups: 0, gallery: 0 })
 
   useEffect(() => {
     Promise.all([
+      fetch("/api/blog").then((r) => r.json()),
       fetch("/api/writeups").then((r) => r.json()),
       fetch("/api/gallery").then((r) => r.json()),
-    ]).then(([writeups, gallery]) => {
-      setStats({ writeups: writeups.length, gallery: gallery.length })
+    ]).then(([blog, writeups, gallery]) => {
+      setStats({ blog: blog.length, writeups: writeups.length, gallery: gallery.length })
     })
   }, [])
 
   const cards = [
+    {
+      title: "Blog",
+      count: stats.blog,
+      href: "/admin/blog",
+      icon: BookOpen,
+      color: "text-blue-400",
+      bg: "bg-blue-500/10",
+    },
     {
       title: "Writeups",
       count: stats.writeups,
