@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress"
 import { Linkedin, Github, Award, Trophy } from "lucide-react"
 import Contact from "./_component/Contact"
 import Navbar from "@/components/navbar"
+import { PageSkeleton } from "@/components/skeleton"
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
@@ -20,13 +21,18 @@ const defaultConfig: SiteConfig = {
 export default function Portfolio() {
   const [config, setConfig] = useState<SiteConfig>(defaultConfig)
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
-    setIsVisible(true)
-    fetch("/api/site").then(r => r.json()).then(setConfig).catch(() => {})
-    fetch("/api/blog").then(r => r.json()).then(setBlogPosts).catch(() => {})
+    Promise.all([
+      fetch("/api/site").then(r => r.json()).then(setConfig),
+      fetch("/api/blog").then(r => r.json()).then(setBlogPosts),
+    ]).finally(() => {
+      setLoading(false)
+      setIsVisible(true)
+    })
   }, [])
 
   const toggleCard = (id: string) => setExpandedCard(expandedCard === id ? null : id)
@@ -42,6 +48,8 @@ export default function Portfolio() {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
     )},
   ]
+
+  if (loading) return <PageSkeleton />
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
