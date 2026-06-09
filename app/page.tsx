@@ -57,11 +57,17 @@ export default function Portfolio() {
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-lg">{config.hero.description}</p>
             <div className="flex gap-4 pt-2">
-              <a href={config.hero.cvUrl} target="_blank" rel="noopener noreferrer">
-                <Button className="bg-foreground hover:bg-foreground/90 text-background font-medium px-8 py-6 rounded-xl transition-all duration-300">
-                  View CV
-                </Button>
-              </a>
+              <Button onClick={() => {
+                if (config.hero.cvUrl.startsWith("data:")) {
+                  const w = window.open("", "_blank")
+                  if (w) w.document.write(`<iframe src="${config.hero.cvUrl}" width="100%" height="100%" style="border:none"></iframe>`)
+                  else window.location.href = config.hero.cvUrl
+                } else {
+                  window.open(config.hero.cvUrl, "_blank")
+                }
+              }} className="bg-foreground hover:bg-foreground/90 text-background font-medium px-8 py-6 rounded-xl transition-all duration-300">
+                View CV
+              </Button>
               <Button variant="outline" onClick={() => scrollTo("contact")}
                 className="border-border text-foreground hover:bg-secondary px-8 py-6 rounded-xl bg-transparent transition-all duration-300">
                 Let&apos;s Talk
