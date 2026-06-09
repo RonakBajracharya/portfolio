@@ -2,24 +2,26 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { BookOpen, Image, FileText } from "lucide-react"
+import { BookOpen, Image, FileText, Mail } from "lucide-react"
 
 interface Stats {
   blog: number
   writeups: number
   gallery: number
+  messages: number
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({ blog: 0, writeups: 0, gallery: 0 })
+  const [stats, setStats] = useState<Stats>({ blog: 0, writeups: 0, gallery: 0, messages: 0 })
 
   useEffect(() => {
     Promise.all([
       fetch("/api/blog").then((r) => r.json()),
       fetch("/api/writeups").then((r) => r.json()),
       fetch("/api/gallery").then((r) => r.json()),
-    ]).then(([blog, writeups, gallery]) => {
-      setStats({ blog: blog.length, writeups: writeups.length, gallery: gallery.length })
+      fetch("/api/contact").then((r) => r.json()),
+    ]).then(([blog, writeups, gallery, messages]) => {
+      setStats({ blog: blog.length, writeups: writeups.length, gallery: gallery.length, messages: messages.length })
     })
   }, [])
 
@@ -47,6 +49,14 @@ export default function AdminDashboard() {
       icon: Image,
       color: "text-purple-400",
       bg: "bg-purple-500/10",
+    },
+    {
+      title: "Messages",
+      count: stats.messages,
+      href: "/cyancharley/messages",
+      icon: Mail,
+      color: "text-green-400",
+      bg: "bg-green-500/10",
     },
     {
       title: "Site Content",

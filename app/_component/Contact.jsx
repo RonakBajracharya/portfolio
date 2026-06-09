@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function Contact() {
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "", email: "", message: "" });
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,11 +14,11 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setLoading(true); setStatus(null);
-    if (!formData.name || !formData.email || !formData.message) { setStatus({ error: "Please fill all fields." }); setLoading(false); return; }
+    if (!formData.name || !formData.email || !formData.message) { setStatus({ error: "Please fill all required fields." }); setLoading(false); return; }
     try {
-      const res = await fetch("https://charlie-backend-rtdr.onrender.com/contacts/form", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
+      const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
       const data = await res.json();
-      if (res.ok) { setStatus({ success: data.message || "Message sent!" }); setFormData({ name: "", email: "", message: "" }); }
+      if (res.ok) { setStatus({ success: "Message sent!" }); setFormData({ name: "", phone: "", email: "", message: "" }); }
       else setStatus({ error: data.error || "Failed to send message." });
     } catch { setStatus({ error: "An error occurred. Try again." }); }
     setLoading(false);
@@ -30,11 +30,12 @@ export default function Contact() {
         <h2 className="text-4xl font-bold text-center mb-3 tracking-tight">Get in Touch</h2>
         <p className="text-muted-foreground text-center mb-12">Have a question or want to work together?</p>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Input name="name" placeholder="Name" value={formData.name} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl h-12" required />
           <div className="grid md:grid-cols-2 gap-4">
-            <Input name="name" placeholder="Name" value={formData.name} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl h-12" />
-            <Input name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl h-12" />
+            <Input name="phone" type="tel" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl h-12" />
+            <Input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl h-12" required />
           </div>
-          <Textarea name="message" placeholder="Your message..." rows={5} value={formData.message} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl" />
+          <Textarea name="message" placeholder="Your message..." rows={5} value={formData.message} onChange={handleChange} className="bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-foreground/20 rounded-xl" required />
           <div className="text-center">
             <Button type="submit" disabled={loading} className="bg-foreground hover:bg-foreground/90 text-background font-medium px-10 py-6 rounded-xl transition-all">
               {loading ? "Sending..." : "Send Message"}

@@ -553,6 +553,18 @@ async function initDatabase() {
       `
     }
   }
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL DEFAULT '',
+      email TEXT NOT NULL,
+      message TEXT NOT NULL,
+      read BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
 }
 
 // ---- File-based fallback ----
@@ -951,5 +963,94 @@ export async function deleteBlogPost(id: string): Promise<boolean> {
   if (index === -1) return false
   posts.splice(index, 1)
   await writeFile("blog.json", posts)
+  return true
+}
+
+// ---- Contact Messages ----
+
+export interface ContactMessage {
+  id: string
+  name: string
+  phone: string
+  email: string
+  message: string
+  read: boolean
+  createdAt: string
+}
+
+export async function getMessages(): Promise<ContactMessage[]> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const rows = await sql`SELECT * FROM messages ORDER BY created_at DESC` as Record<string, unknown>[]
+    return (rows as { created_at: string; [k: string]: unknown }[]).map((r) => ({
+      id: r.id as string, name: r.name as string, phone: r.phone as string,
+      email: r.email as string, message: r.message as string,
+      read: (r.read as boolean) || false, createdAt: r.created_at as string,
+    }))
+  }
+  return readFile<ContactMessage[]>("messages.json", [])
+}
+
+export async function getMessageById(id: string): Promise<ContactMessage | null> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const rows = await sql`SELECT * FROM messages WHERE id = ${id}` as Record<string, unknown>[]
+    if (rows.length === 0) return null
+    const r = rows[0] as { created_at: string; [k: string]: unknown }
+    return {
+      id: r.id as string, name: r.name as string, phone: r.phone as string,
+      email: r.email as string, message: r.message as string,
+      read: (r.read as boolean) || false, createdAt: r.created_at as string,
+    }
+  }
+  const msgs = await getMessages()
+  return msgs.find((m) => m.id === id) || null
+}
+
+export async function createMessage(data: Omit<ContactMessage, "id" | "read" | "createdAt">): Promise<ContactMessage> {
+  const now = new Date().toISOString()
+  const id = "m" + String(Date.now())
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`INSERT INTO messages (id, name, phone, email, message, read, created_at) VALUES (${id}, ${data.name}, ${data.phone}, ${data.email}, ${data.message}, false, ${now})`
+    return { ...data, id, read: false, createdAt: now }
+  }
+  const msgs = await getMessages()
+  const nm: ContactMessage = { ...data, id, read: false, createdAt: now }
+  msgs.push(nm)
+  await writeFile("messages.json", msgs)
+  return nm
+}
+
+export async function markMessageRead(id: string): Promise<boolean> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`UPDATE messages SET read = true WHERE id = ${id}`
+    return true
+  }
+  const msgs = await getMessages()
+  const index = msgs.findIndex((m) => m.id === id)
+  if (index === -1) return false
+  msgs[index].read = true
+  await writeFile("messages.json", msgs)
+  return true
+}
+
+export async function deleteMessage(id: string): Promise<boolean> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`DELETE FROM messages WHERE id = ${id}`
+    return true
+  }
+  const msgs = await getMessages()
+  const index = msgs.findIndex((m) => m.id === id)
+  if (index === -1) return false
+  msgs.splice(index, 1)
+  await writeFile("messages.json", msgs)
   return true
 }

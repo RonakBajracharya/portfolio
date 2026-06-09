@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, BookOpen, Image, FileText, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, BookOpen, Image, FileText, Mail, LogOut, Menu, X } from "lucide-react"
 
 const sidebarLinks = [
   { href: "/cyancharley", label: "Dashboard", icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const sidebarLinks = [
   { href: "/cyancharley/blog", label: "Blog", icon: BookOpen },
   { href: "/cyancharley/writeups", label: "Writeups", icon: BookOpen },
   { href: "/cyancharley/gallery", label: "Gallery", icon: Image },
+  { href: "/cyancharley/messages", label: "Messages", icon: Mail },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
