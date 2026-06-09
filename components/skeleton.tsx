@@ -1,14 +1,14 @@
 "use client"
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse bg-foreground/10 rounded-lg ${className}`} />
+  return <div className={`animate-pulse bg-[#262626] rounded-lg ${className}`} />
 }
 
 export function PageSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Nav skeleton */}
-      <div className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-md z-50 border-b border-border">
+      <div className="fixed top-0 left-0 right-0 bg-[#0a0a0a]/80 backdrop-blur-md z-50 border-b border-[#262626]">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Skeleton className="h-6 w-20" />
           <div className="hidden md:flex space-x-8">
@@ -40,9 +40,9 @@ export function PageSkeleton() {
       </section>
 
       {/* Journey skeleton */}
-      <section className="px-6 py-24 border-y border-border bg-secondary/30">
+      <section className="px-6 py-24 border-y border-[#262626] bg-[#141414]">
         <div className="max-w-6xl mx-auto">
-          <Skeleton className="h-10 w-48 mx-auto mb-16 bg-foreground/10" />
+          <Skeleton className="h-10 w-48 mx-auto mb-16 bg-[#333]" />
           <div className="grid md:grid-cols-2 gap-16">
             {[1, 2].map(i => (
               <div key={i} className="space-y-4">
@@ -57,7 +57,7 @@ export function PageSkeleton() {
       {/* Skills skeleton */}
       <section className="px-6 py-24">
         <div className="max-w-3xl mx-auto">
-          <Skeleton className="h-10 w-40 mx-auto mb-16 bg-foreground/10" />
+          <Skeleton className="h-10 w-40 mx-auto mb-16 bg-[#333]" />
           <div className="grid md:grid-cols-2 gap-x-16 gap-y-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <div key={i}>
