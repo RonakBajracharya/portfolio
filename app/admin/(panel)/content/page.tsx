@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Save } from "lucide-react"
+import UploadBtn from "@/components/upload-btn"
 import type { SiteConfig, Skill, Education, Experience, Certification, Achievement } from "@/lib/db"
 
 const defaultSkill: Skill = { name: "", percentage: 80 }
@@ -77,49 +78,6 @@ export default function AdminContent() {
     )
   }
 
-  const handleUpload = async (file: File): Promise<string | null> => {
-    const fd = new FormData()
-    fd.append("file", file)
-    const res = await fetch("/api/upload", { method: "POST", body: fd })
-    const data = await res.json()
-    return data.url || null
-  }
-
-  function UploadBtn({ onUpload }: { onUpload: (url: string) => void }) {
-    const [uploading, setUploading] = useState(false)
-    return (
-      <>
-        <input
-          type="file"
-          accept="image/*"
-          id={`upload-${Math.random().toString(36).slice(2)}`}
-          className="hidden"
-          onChange={async (e) => {
-            const f = e.target.files?.[0]
-            if (!f) return
-            setUploading(true)
-            const url = await handleUpload(f)
-            setUploading(false)
-            if (url) onUpload(url)
-            e.target.value = ""
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          disabled={uploading}
-          onClick={(e) => {
-            const input = (e.currentTarget as HTMLElement).previousElementSibling as HTMLInputElement
-            input.click()
-          }}
-          className="border-slate-600 text-gray-400 hover:text-white whitespace-nowrap"
-        >
-          {uploading ? "Uploading..." : "Upload"}
-        </Button>
-      </>
-    )
-  }
-
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
       <h2 className="text-lg font-semibold text-teal-400 mb-4">{title}</h2>
@@ -186,40 +144,6 @@ export default function AdminContent() {
                 className="bg-slate-900 border-slate-600 text-white flex-1"
               />
               <UploadBtn onUpload={(url) => setConfig({ ...config, hero: { ...config.hero, portraitUrl: url } })} />
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* About */}
-      <Section title="About Section">
-        <div className="space-y-4">
-          <div>
-            <Label>Heading</Label>
-            <Input
-              value={config.about.heading}
-              onChange={(e) => setConfig({ ...config, about: { ...config.about, heading: e.target.value } })}
-              className="bg-slate-900 border-slate-600 text-white"
-            />
-          </div>
-          <div>
-            <Label>Description</Label>
-            <Textarea
-              value={config.about.description}
-              onChange={(e) => setConfig({ ...config, about: { ...config.about, description: e.target.value } })}
-              className="bg-slate-900 border-slate-600 text-white"
-              rows={4}
-            />
-          </div>
-          <div>
-            <Label>Portrait URL</Label>
-            <div className="flex gap-2">
-              <Input
-                value={config.about.portraitUrl}
-                onChange={(e) => setConfig({ ...config, about: { ...config.about, portraitUrl: e.target.value } })}
-                className="bg-slate-900 border-slate-600 text-white flex-1"
-              />
-              <UploadBtn onUpload={(url) => setConfig({ ...config, about: { ...config.about, portraitUrl: url } })} />
             </div>
           </div>
         </div>

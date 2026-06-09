@@ -89,7 +89,7 @@ export default function Portfolio() {
       </section>
 
       {/* Journey */}
-      <section id="education" className="px-6 py-24">
+      <section id="education" className="px-6 py-24 border-y border-border bg-secondary/30">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">Journey</h2>
           <div className="grid md:grid-cols-2 gap-16">
