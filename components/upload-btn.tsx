@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 
 export default function UploadBtn({ onUpload, accept = "image/*" }: { onUpload: (url: string) => void; accept?: string }) {
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
   const idRef = useRef(`upload-${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
   return (
-    <>
+    <div className="flex flex-col gap-1">
       <input
         type="file"
         accept={accept}
@@ -18,12 +19,18 @@ export default function UploadBtn({ onUpload, accept = "image/*" }: { onUpload: 
           const f = e.target.files?.[0]
           if (!f) return
           setUploading(true)
+          setError("")
           const fd = new FormData()
           fd.append("file", f)
-          const res = await fetch("/api/upload", { method: "POST", body: fd })
-          const data = await res.json()
+          try {
+            const res = await fetch("/api/upload", { method: "POST", body: fd })
+            const data = await res.json()
+            if (data.url) onUpload(data.url)
+            else setError(data.error || "Upload failed")
+          } catch {
+            setError("Network error")
+          }
           setUploading(false)
-          if (data.url) onUpload(data.url)
           e.target.value = ""
         }}
       />
@@ -36,6 +43,7 @@ export default function UploadBtn({ onUpload, accept = "image/*" }: { onUpload: 
       >
         {uploading ? "Uploading..." : "Upload"}
       </Button>
-    </>
+      {error && <span className="text-red-400 text-xs">{error}</span>}
+    </div>
   )
 }
