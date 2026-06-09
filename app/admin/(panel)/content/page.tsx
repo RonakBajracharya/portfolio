@@ -129,11 +129,14 @@ export default function AdminContent() {
           </div>
           <div>
             <Label>CV URL</Label>
-            <Input
-              value={config.hero.cvUrl}
-              onChange={(e) => setConfig({ ...config, hero: { ...config.hero, cvUrl: e.target.value } })}
-              className="bg-slate-900 border-slate-600 text-white"
-            />
+            <div className="flex gap-2">
+              <Input
+                value={config.hero.cvUrl}
+                onChange={(e) => setConfig({ ...config, hero: { ...config.hero, cvUrl: e.target.value } })}
+                className="bg-slate-900 border-slate-600 text-white flex-1"
+              />
+              <UploadBtn accept=".pdf" onUpload={(url) => setConfig({ ...config, hero: { ...config.hero, cvUrl: url } })} />
+            </div>
           </div>
           <div>
             <Label>Portrait URL</Label>

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 
-export default function UploadBtn({ onUpload }: { onUpload: (url: string) => void }) {
+export default function UploadBtn({ onUpload, accept = "image/*" }: { onUpload: (url: string) => void; accept?: string }) {
   const [uploading, setUploading] = useState(false)
   const idRef = useRef(`upload-${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
@@ -11,7 +11,7 @@ export default function UploadBtn({ onUpload }: { onUpload: (url: string) => voi
     <>
       <input
         type="file"
-        accept="image/*"
+        accept={accept}
         id={idRef.current}
         className="hidden"
         onChange={async (e) => {
