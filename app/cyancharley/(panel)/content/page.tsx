@@ -4,9 +4,23 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, Save } from "lucide-react"
+import { Plus, Trash2, Save, ArrowUp, ArrowDown } from "lucide-react"
 import UploadBtn from "@/components/upload-btn"
 import type { SiteConfig, Skill, Education, Experience, Certification, Achievement } from "@/lib/db"
+
+function moveUp<T>(arr: T[], i: number, set: (arr: T[]) => void) {
+  if (i <= 0) return
+  const next = [...arr]
+  ;[next[i - 1], next[i]] = [next[i], next[i - 1]]
+  set(next)
+}
+
+function moveDown<T>(arr: T[], i: number, set: (arr: T[]) => void) {
+  if (i >= arr.length - 1) return
+  const next = [...arr]
+  ;[next[i], next[i + 1]] = [next[i + 1], next[i]]
+  set(next)
+}
 
 const defaultSkill: Skill = { name: "", percentage: 80 }
 
@@ -195,7 +209,7 @@ export default function AdminContent() {
       {/* Skills */}
       <Section title="Skills">
         {config.skills.map((skill, i) => (
-          <div key={i} className="grid grid-cols-[1fr,120px,40px] gap-2 mb-2 items-end">
+          <div key={i} className="grid grid-cols-[1fr,120px,24px,24px,40px] gap-2 mb-2 items-end">
             <div>
               <Label>Name</Label>
               <Input
@@ -223,6 +237,12 @@ export default function AdminContent() {
                 className="bg-slate-900 border-slate-600 text-white"
               />
             </div>
+            <Button variant="ghost" size="icon" disabled={i === 0} onClick={() => moveUp(config.skills, i, (arr) => setConfig({ ...config, skills: arr }))} className="h-9 w-6 text-gray-400 hover:text-white">
+              <ArrowUp size={12} />
+            </Button>
+            <Button variant="ghost" size="icon" disabled={i === config.skills.length - 1} onClick={() => moveDown(config.skills, i, (arr) => setConfig({ ...config, skills: arr }))} className="h-9 w-6 text-gray-400 hover:text-white">
+              <ArrowDown size={12} />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -372,17 +392,11 @@ export default function AdminContent() {
                 className="bg-slate-900 border-slate-600 text-white"
               />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const updated = config.education.filter((_, idx) => idx !== i)
-                setConfig({ ...config, education: updated })
-              }}
-              className="mt-3 text-red-400 hover:text-red-300 text-xs"
-            >
-              <Trash2 size={12} className="mr-1" /> Remove Education
-            </Button>
+            <div className="flex items-center gap-2 mt-3">
+              <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveUp(config.education, i, (arr) => setConfig({ ...config, education: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowUp size={12} /></Button>
+              <Button variant="ghost" size="sm" disabled={i === config.education.length - 1} onClick={() => moveDown(config.education, i, (arr) => setConfig({ ...config, education: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowDown size={12} /></Button>
+              <Button variant="ghost" size="sm" onClick={() => { const updated = config.education.filter((_, idx) => idx !== i); setConfig({ ...config, education: updated }) }} className="text-red-400 hover:text-red-300 text-xs"><Trash2 size={12} className="mr-1" /> Remove</Button>
+            </div>
           </div>
         ))}
         <Button
@@ -521,17 +535,11 @@ export default function AdminContent() {
                 className="bg-slate-900 border-slate-600 text-white"
               />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const updated = config.experience.filter((_, idx) => idx !== i)
-                setConfig({ ...config, experience: updated })
-              }}
-              className="mt-3 text-red-400 hover:text-red-300 text-xs"
-            >
-              <Trash2 size={12} className="mr-1" /> Remove Experience
-            </Button>
+            <div className="flex items-center gap-2 mt-3">
+              <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveUp(config.experience, i, (arr) => setConfig({ ...config, experience: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowUp size={12} /></Button>
+              <Button variant="ghost" size="sm" disabled={i === config.experience.length - 1} onClick={() => moveDown(config.experience, i, (arr) => setConfig({ ...config, experience: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowDown size={12} /></Button>
+              <Button variant="ghost" size="sm" onClick={() => { const updated = config.experience.filter((_, idx) => idx !== i); setConfig({ ...config, experience: updated }) }} className="text-red-400 hover:text-red-300 text-xs"><Trash2 size={12} className="mr-1" /> Remove</Button>
+            </div>
           </div>
         ))}
         <Button
@@ -670,17 +678,11 @@ export default function AdminContent() {
                 className="bg-slate-900 border-slate-600 text-white"
               />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const updated = config.certifications.filter((_, idx) => idx !== i)
-                setConfig({ ...config, certifications: updated })
-              }}
-              className="mt-3 text-red-400 hover:text-red-300 text-xs"
-            >
-              <Trash2 size={12} className="mr-1" /> Remove Certification
-            </Button>
+            <div className="flex items-center gap-2 mt-3">
+              <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveUp(config.certifications, i, (arr) => setConfig({ ...config, certifications: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowUp size={12} /></Button>
+              <Button variant="ghost" size="sm" disabled={i === config.certifications.length - 1} onClick={() => moveDown(config.certifications, i, (arr) => setConfig({ ...config, certifications: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowDown size={12} /></Button>
+              <Button variant="ghost" size="sm" onClick={() => { const updated = config.certifications.filter((_, idx) => idx !== i); setConfig({ ...config, certifications: updated }) }} className="text-red-400 hover:text-red-300 text-xs"><Trash2 size={12} className="mr-1" /> Remove</Button>
+            </div>
           </div>
         ))}
         <Button
@@ -795,17 +797,11 @@ export default function AdminContent() {
             >
               + Add Item
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const updated = config.achievements.filter((_, idx) => idx !== i)
-                setConfig({ ...config, achievements: updated })
-              }}
-              className="mt-3 text-red-400 hover:text-red-300 text-xs"
-            >
-              <Trash2 size={12} className="mr-1" /> Remove Achievement
-            </Button>
+            <div className="flex items-center gap-2 mt-3">
+              <Button variant="ghost" size="sm" disabled={i === 0} onClick={() => moveUp(config.achievements, i, (arr) => setConfig({ ...config, achievements: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowUp size={12} /></Button>
+              <Button variant="ghost" size="sm" disabled={i === config.achievements.length - 1} onClick={() => moveDown(config.achievements, i, (arr) => setConfig({ ...config, achievements: arr }))} className="text-gray-400 hover:text-white text-xs h-7"><ArrowDown size={12} /></Button>
+              <Button variant="ghost" size="sm" onClick={() => { const updated = config.achievements.filter((_, idx) => idx !== i); setConfig({ ...config, achievements: updated }) }} className="text-red-400 hover:text-red-300 text-xs"><Trash2 size={12} className="mr-1" /> Remove</Button>
+            </div>
           </div>
         ))}
         <Button
