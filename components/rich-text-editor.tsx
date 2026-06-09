@@ -23,14 +23,6 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
   const [linkUrl, setLinkUrl] = useState("")
   const [showLinkInput, setShowLinkInput] = useState(false)
 
-  const uploadImage = useCallback(async (file: File) => {
-    const formData = new FormData()
-    formData.append("file", file)
-    const res = await fetch("/api/upload", { method: "POST", body: formData })
-    const data = await res.json()
-    return data.url
-  }, [])
-
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -57,15 +49,20 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
     immediatelyRender: false,
   })
 
-  const handleImageUpload = useCallback(async () => {
+  const uploadImage = useCallback((file: File) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      editor?.chain().focus().setImage({ src: reader.result as string }).run()
+    }
+    reader.readAsDataURL(file)
+  }, [editor])
+
+  const handleImageUpload = useCallback(() => {
     const input = fileInputRef.current
     if (!input || !editor) return
-    input.onchange = async () => {
+    input.onchange = () => {
       const file = input.files?.[0]
-      if (file) {
-        const url = await uploadImage(file)
-        editor.chain().focus().setImage({ src: url }).run()
-      }
+      if (file) uploadImage(file)
       input.value = ""
     }
     input.click()
