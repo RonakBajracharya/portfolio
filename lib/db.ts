@@ -535,31 +535,39 @@ async function initDatabase() {
 // ---- File-based fallback ----
 
 const DATA_DIR = path.join(process.cwd(), "data")
+let _fsOk: boolean | null = null
 
-async function ensureDataDir() {
+async function isFsWritable(): Promise<boolean> {
+  if (_fsOk !== null) return _fsOk
   try {
-    await fs.access(DATA_DIR)
-  } catch {
     await fs.mkdir(DATA_DIR, { recursive: true })
+    const testFile = path.join(DATA_DIR, ".write-test")
+    await fs.writeFile(testFile, "ok", "utf-8")
+    await fs.unlink(testFile)
+    _fsOk = true
+  } catch {
+    _fsOk = false
   }
+  return _fsOk
 }
 
 async function readFile<T>(filename: string, fallback: T): Promise<T> {
-  await ensureDataDir()
+  if (!(await isFsWritable())) return fallback
   const filePath = path.join(DATA_DIR, filename)
   try {
     const raw = await fs.readFile(filePath, "utf-8")
     return JSON.parse(raw) as T
   } catch {
-    await fs.writeFile(filePath, JSON.stringify(fallback, null, 2), "utf-8")
     return fallback
   }
 }
 
 async function writeFile<T>(filename: string, data: T): Promise<void> {
-  await ensureDataDir()
-  const filePath = path.join(DATA_DIR, filename)
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8")
+  if (!(await isFsWritable())) return
+  try {
+    const filePath = path.join(DATA_DIR, filename)
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8")
+  } catch {}
 }
 
 // =====================================================
