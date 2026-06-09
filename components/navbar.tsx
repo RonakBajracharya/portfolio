@@ -11,7 +11,7 @@ const navLinks = [
   { label: "Blog", href: "/blog" },
   { label: "Writeups", href: "/writeups" },
   { label: "Gallery", href: "/gallery" },
-  { label: "Admin", href: "/admin" },
+  { label: "Admin", href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
 ]
 
 export default function Navbar() {

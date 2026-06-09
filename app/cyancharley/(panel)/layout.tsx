@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button"
 import { LayoutDashboard, BookOpen, Image, FileText, LogOut, Menu, X } from "lucide-react"
 
 const sidebarLinks = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/content", label: "Content", icon: FileText },
-  { href: "/admin/blog", label: "Blog", icon: BookOpen },
-  { href: "/admin/writeups", label: "Writeups", icon: BookOpen },
-  { href: "/admin/gallery", label: "Gallery", icon: Image },
+  { href: "/cyancharley", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/cyancharley/content", label: "Content", icon: FileText },
+  { href: "/cyancharley/blog", label: "Blog", icon: BookOpen },
+  { href: "/cyancharley/writeups", label: "Writeups", icon: BookOpen },
+  { href: "/cyancharley/gallery", label: "Gallery", icon: Image },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then((r) => r.json())
       .then((data) => {
         if (!data.authenticated) {
-          router.push("/admin/login")
+          router.push("/cyancharley/login")
         } else {
           setAuthenticated(true)
         }
@@ -42,7 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
-    router.push("/admin/login")
+    router.push("/cyancharley/login")
   }
 
   return (
@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }`}
       >
         <div className="p-6 border-b border-slate-700 flex-shrink-0">
-          <Link href="/admin" className="text-xl font-bold text-teal-400">
+          <Link href="/cyancharley" className="text-xl font-bold text-teal-400">
             Admin Panel
           </Link>
         </div>
@@ -101,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 min-w-0">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
-          <Link href="/admin" className="text-lg font-bold text-teal-400">
+          <Link href="/cyancharley" className="text-lg font-bold text-teal-400">
             Admin
           </Link>
           <Button

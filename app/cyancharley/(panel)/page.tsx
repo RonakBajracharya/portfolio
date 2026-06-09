@@ -27,7 +27,7 @@ export default function AdminDashboard() {
     {
       title: "Blog",
       count: stats.blog,
-      href: "/admin/blog",
+      href: "/cyancharley/blog",
       icon: BookOpen,
       color: "text-blue-400",
       bg: "bg-blue-500/10",
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
     {
       title: "Writeups",
       count: stats.writeups,
-      href: "/admin/writeups",
+      href: "/cyancharley/writeups",
       icon: BookOpen,
       color: "text-blue-400",
       bg: "bg-blue-500/10",
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
     {
       title: "Gallery",
       count: stats.gallery,
-      href: "/admin/gallery",
+      href: "/cyancharley/gallery",
       icon: Image,
       color: "text-purple-400",
       bg: "bg-purple-500/10",
@@ -51,7 +51,7 @@ export default function AdminDashboard() {
     {
       title: "Site Content",
       count: "—",
-      href: "/admin/content",
+      href: "/cyancharley/content",
       icon: FileText,
       color: "text-teal-400",
       bg: "bg-teal-500/10",
@@ -82,13 +82,13 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold mb-2">Quick Actions</h2>
         <div className="flex flex-wrap gap-3 mt-4">
           <Link
-            href="/admin/writeups"
+            href="/cyancharley/writeups"
             className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors text-sm"
           >
             + New Writeup
           </Link>
           <Link
-            href="/admin/gallery"
+            href="/cyancharley/gallery"
             className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors text-sm"
           >
             + Add Gallery Item

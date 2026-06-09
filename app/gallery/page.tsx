@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
+import { Skeleton } from "@/components/skeleton"
 import type { GalleryItem } from "@/lib/db"
 
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<GalleryItem | null>(null)
 
-  useEffect(() => { fetch("/api/gallery").then(r => r.json()).then(setItems).catch(() => {}) }, [])
+  useEffect(() => {
+    fetch("/api/gallery").then(r => r.json()).then(d => { setItems(d); setLoading(false) }).catch(() => setLoading(false))
+  }, [])
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -19,7 +23,11 @@ export default function GalleryPage() {
           <Link href="/" className="hover:text-foreground transition-colors">Home</Link><span>/</span><span className="text-foreground">Gallery</span>
         </div>
         <h1 className="text-4xl font-bold mb-10 tracking-tight">Gallery</h1>
-        {items.length > 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-2">
+            {[1,2,3,4,5,6,7,8].map(i => <Skeleton key={i} className="aspect-square" />)}
+          </div>
+        ) : items.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-2">
             {items.map(item => (
               <button key={item.id} onClick={() => setSelected(item)} className="aspect-square relative overflow-hidden group cursor-pointer bg-secondary">

@@ -5,14 +5,18 @@ import Link from "next/link"
 import { Calendar, Tag, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import Navbar from "@/components/navbar"
+import { Skeleton } from "@/components/skeleton"
 import type { Writeup } from "@/lib/db"
 
 export default function WriteupsPage() {
   const [writeups, setWriteups] = useState<Writeup[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null)
 
-  useEffect(() => { fetch("/api/writeups").then(r => r.json()).then(setWriteups).catch(() => {}) }, [])
+  useEffect(() => {
+    fetch("/api/writeups").then(r => r.json()).then(d => { setWriteups(d); setLoading(false) }).catch(() => setLoading(false))
+  }, [])
 
   const events = [...new Set(writeups.map(w => w.event))]
   const filtered = writeups.filter(w => {
@@ -43,7 +47,11 @@ export default function WriteupsPage() {
               ))}
             </div>
           </div>
-          {Object.keys(grouped).length > 0 ? (
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-44 rounded-xl" />)}
+            </div>
+          ) : Object.keys(grouped).length > 0 ? (
             <div className="space-y-20">
               {Object.entries(grouped).map(([event, items]) => (
                 <div key={event}>

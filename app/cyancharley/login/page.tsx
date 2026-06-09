@@ -23,7 +23,7 @@ export default function AdminLogin() {
     })
 
     if (res.ok) {
-      router.push("/admin")
+      router.push("/cyancharley")
     } else {
       const data = await res.json()
       setError(data.error || "Login failed")
