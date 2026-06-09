@@ -89,6 +89,14 @@ export default function AdminContent() {
     <label className="block text-sm text-gray-400 mb-1" {...props}>{children}</label>
   )
 
+  function displayUrl(url: string) {
+    if (url.startsWith("data:")) {
+      const mime = url.slice(5, url.indexOf(";"))
+      return `[Uploaded: ${mime}]`
+    }
+    return url
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -131,7 +139,7 @@ export default function AdminContent() {
             <Label>CV URL</Label>
             <div className="flex gap-2">
               <Input
-                value={config.hero.cvUrl}
+                value={displayUrl(config.hero.cvUrl)}
                 onChange={(e) => setConfig({ ...config, hero: { ...config.hero, cvUrl: e.target.value } })}
                 className="bg-slate-900 border-slate-600 text-white flex-1"
               />
@@ -142,7 +150,7 @@ export default function AdminContent() {
             <Label>Portrait URL</Label>
             <div className="flex gap-2">
               <Input
-                value={config.hero.portraitUrl}
+                value={displayUrl(config.hero.portraitUrl)}
                 onChange={(e) => setConfig({ ...config, hero: { ...config.hero, portraitUrl: e.target.value } })}
                 className="bg-slate-900 border-slate-600 text-white flex-1"
               />
