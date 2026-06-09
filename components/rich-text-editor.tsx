@@ -19,6 +19,7 @@ interface RichTextEditorProps {
 
 export default function RichTextEditor({ content, onChange, placeholder = "Start writing..." }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const initialContentRef = useRef(content)
   const [linkUrl, setLinkUrl] = useState("")
   const [showLinkInput, setShowLinkInput] = useState(false)
 
@@ -44,7 +45,7 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
       }),
       Placeholder.configure({ placeholder }),
     ],
-    content,
+    content: initialContentRef.current,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
     },
