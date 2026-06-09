@@ -46,6 +46,27 @@ const defaultAchievement: Achievement = {
   details: { heading: "", items: [""] },
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
+      <h2 className="text-lg font-semibold text-teal-400 mb-4">{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+function Label({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
+  return <label className="block text-sm text-gray-400 mb-1" {...props}>{children}</label>
+}
+
+function displayUrl(url: string) {
+  if (url.startsWith("data:")) {
+    const mime = url.slice(5, url.indexOf(";"))
+    return `[Uploaded: ${mime}]`
+  }
+  return url
+}
+
 export default function AdminContent() {
   const [config, setConfig] = useState<SiteConfig | null>(null)
   const [loading, setLoading] = useState(false)
@@ -76,25 +97,6 @@ export default function AdminContent() {
         <div className="w-8 h-8 border-4 border-teal-400 border-t-transparent rounded-full animate-spin" />
       </div>
     )
-  }
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
-      <h2 className="text-lg font-semibold text-teal-400 mb-4">{title}</h2>
-      {children}
-    </div>
-  )
-
-  const Label = ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-    <label className="block text-sm text-gray-400 mb-1" {...props}>{children}</label>
-  )
-
-  function displayUrl(url: string) {
-    if (url.startsWith("data:")) {
-      const mime = url.slice(5, url.indexOf(";"))
-      return `[Uploaded: ${mime}]`
-    }
-    return url
   }
 
   return (
