@@ -7,19 +7,6 @@ try {
   useBlob = !!process.env.BLOB_READ_WRITE_TOKEN
 } catch {}
 
-async function saveLocal(file: File): Promise<string> {
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-  const ext = file.name.split(".").pop() || "png"
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-  const fs = await import("fs/promises")
-  const path = await import("path")
-  const dir = path.join(process.cwd(), "public", "uploads")
-  await fs.mkdir(dir, { recursive: true })
-  await fs.writeFile(path.join(dir, filename), buffer)
-  return `/uploads/${filename}`
-}
-
 export async function POST(request: Request) {
   const auth = await requireAuth()
   if (!auth.authorized) {
@@ -37,11 +24,26 @@ export async function POST(request: Request) {
       const blob = await put(file.name, file, { access: "public" })
       url = blob.url
     } else {
-      url = await saveLocal(file)
+      try {
+        const fs = await import("fs/promises")
+        const path = await import("path")
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+        const ext = file.name.split(".").pop() || "png"
+        const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const dir = path.join(process.cwd(), "public", "uploads")
+        await fs.mkdir(dir, { recursive: true })
+        await fs.writeFile(path.join(dir, filename), buffer)
+        url = `/uploads/${filename}`
+      } catch (e) {
+        console.error("Local upload failed:", e)
+        return NextResponse.json({ error: "Server filesystem is read-only. Set BLOB_READ_WRITE_TOKEN for production uploads." }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ url })
-  } catch {
+  } catch (e) {
+    console.error("Upload failed:", e)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
   }
 }
