@@ -58,7 +58,7 @@ export default function Portfolio() {
       {/* Hero */}
       <section id="home" className="relative px-6 pt-32 pb-24 halftone">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center relative z-10">
-          <div className={`space-y-6 transition-all duration-1000 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}`}>
+          <div className={`space-y-6 transition-all duration-1000 order-2 md:order-1 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}`}>
             <p className="text-xs font-medium text-muted-foreground tracking-widest uppercase">{config.hero.title}</p>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-none">
               {config.hero.name || "Hello"}
@@ -90,7 +90,7 @@ export default function Portfolio() {
               ))}
             </div>
           </div>
-          <div className={`relative transition-all duration-1000 delay-200 ${isVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}>
+          <div className={`relative transition-all duration-1000 delay-200 order-1 md:order-2 ${isVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}>
             {config.hero.portraitUrl ? (
               <Image src={config.hero.portraitUrl} alt={config.hero.name} width={500} height={600} className="relative w-full max-w-sm mx-auto rounded-2xl grayscale" />
             ) : (
