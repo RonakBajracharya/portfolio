@@ -23,7 +23,7 @@ export function PageSkeleton() {
       {/* Hero skeleton */}
       <section className="px-6 pt-32 pb-24">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-          <div className="space-y-6">
+          <div className="space-y-6 order-2 md:order-1">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-16 w-full max-w-md" />
             <Skeleton className="h-16 w-full max-w-sm" />
@@ -35,7 +35,7 @@ export function PageSkeleton() {
               <Skeleton className="h-14 w-40 rounded-xl" />
             </div>
           </div>
-          <Skeleton className="w-full max-w-sm mx-auto aspect-[5/6] rounded-2xl" />
+          <Skeleton className="w-full max-w-sm mx-auto aspect-[5/6] rounded-2xl order-1 md:order-2" />
         </div>
       </section>
 
