@@ -88,22 +88,6 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* About */}
-      <section id="about" className="px-6 py-24 border-y border-border bg-secondary/30">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 tracking-tight">About</h2>
-          <div className="w-20 h-20 mx-auto rounded-2xl border border-border overflow-hidden mb-8">
-            {config.about.portraitUrl ? (
-              <Image src={config.about.portraitUrl} alt="" width={80} height={80} className="w-full h-full object-cover grayscale" />
-            ) : (
-              <div className="w-full h-full bg-secondary flex items-center justify-center text-muted-foreground text-xs">Photo</div>
-            )}
-          </div>
-          <h3 className="text-xl font-semibold mb-4">{config.about.heading}</h3>
-          <p className="text-muted-foreground leading-relaxed text-lg">{config.about.description}</p>
-        </div>
-      </section>
-
       {/* Journey */}
       <section id="education" className="px-6 py-24">
         <div className="max-w-6xl mx-auto">
