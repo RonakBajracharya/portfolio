@@ -6,6 +6,14 @@ import ImageExtension from "@tiptap/extension-image"
 import LinkExtension from "@tiptap/extension-link"
 import Placeholder from "@tiptap/extension-placeholder"
 import { useCallback, useRef, useState } from "react"
+
+function useDebounce(fn: (v: string) => void, delay: number) {
+  const timer = useRef<NodeJS.Timeout | null>(null)
+  return (v: string) => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => fn(v), delay)
+  }
+}
 import {
   Bold, Italic, Strikethrough, Code, List, ListOrdered, Quote, Code2,
   Undo, Redo, Image as ImageIcon, Link as LinkIcon, Heading1, Heading2, Heading3,
@@ -23,6 +31,8 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
   const [linkUrl, setLinkUrl] = useState("")
   const [showLinkInput, setShowLinkInput] = useState(false)
 
+  const debouncedChange = useDebounce(onChange, 250)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -39,7 +49,7 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
     ],
     content: initialContentRef.current,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      debouncedChange(editor.getHTML())
     },
     editorProps: {
       attributes: {
