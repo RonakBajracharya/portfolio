@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { GalleryItem } from "@/lib/db";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function GalleryClient({
   initialItems,
 }: {
   initialItems: GalleryItem[];
 }) {
-  const [items] = useState(initialItems);
+  const items = initialItems;
   const [selected, setSelected] = useState<GalleryItem | null>(null);
 
   return (
