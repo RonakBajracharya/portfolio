@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Linkedin, Github, Award, Trophy } from "lucide-react";
 import Contact from "./Contact";
-import Navbar from "@/components/navbar";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";

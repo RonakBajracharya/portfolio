@@ -1,16 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import type { GalleryItem } from "@/lib/db"
+import { useState } from "react";
+import Link from "next/link";
+import type { GalleryItem } from "@/lib/db";
+import Image from "next/image";
 
 export default function GalleryClient({
   initialItems,
 }: {
-  initialItems: GalleryItem[]
+  initialItems: GalleryItem[];
 }) {
-  const [items] = useState(initialItems)
-  const [selected, setSelected] = useState<GalleryItem | null>(null)
+  const [items] = useState(initialItems);
+  const [selected, setSelected] = useState<GalleryItem | null>(null);
 
   return (
     <>
@@ -33,7 +34,9 @@ export default function GalleryClient({
                 onClick={() => setSelected(item)}
                 className="aspect-square relative overflow-hidden group cursor-pointer bg-secondary"
               >
-                <img
+                <Image
+                  height={500}
+                  width={500}
                   src={item.imageUrl}
                   alt={item.title}
                   className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
@@ -71,7 +74,9 @@ export default function GalleryClient({
             className="max-w-4xl max-h-[90vh] w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <Image
+              height={500}
+              width={500}
               src={selected.imageUrl}
               alt={selected.title}
               className="w-full h-auto max-h-[75vh] object-contain rounded-xl"
@@ -106,5 +111,5 @@ export default function GalleryClient({
         </div>
       )}
     </>
-  )
+  );
 }

@@ -1190,3 +1190,35 @@ export async function deleteProject(id: string): Promise<boolean> {
   await writeFile("projects.json", projects)
   return true
 }
+
+// ---- Dashboard Stats ----
+
+export interface DashboardStats {
+  blog: number
+  writeups: number
+  projects: number
+  gallery: number
+  messages: number
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const sql = getSql()
+
+  await initDatabase()
+
+  const [b, w, p, g, m] = await Promise.all([
+  sql`SELECT COUNT(*)::int AS count FROM blog`,
+  sql`SELECT COUNT(*)::int AS count FROM writeups`,
+  sql`SELECT COUNT(*)::int AS count FROM projects`,
+  sql`SELECT COUNT(*)::int AS count FROM gallery`,
+  sql`SELECT COUNT(*)::int AS count FROM messages`,
+])
+
+  return {
+    blog: b[0].count,
+    writeups: w[0].count,
+    projects: p[0].count,
+    gallery: g[0].count,
+    messages: m[0].count,
+  }
+}

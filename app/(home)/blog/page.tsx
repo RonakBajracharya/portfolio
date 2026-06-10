@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { Calendar } from "lucide-react"
-import Navbar from "@/components/navbar"
 import { getBlogPosts } from "@/lib/db"
 
 interface Post {
@@ -83,13 +82,6 @@ export default async function BlogPage() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="px-6 py-8 border-t border-border text-center">
-        <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Ronak Bajracharya
-        </p>
-      </footer>
     </>
   )
 }

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Calendar, Tag, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/skeleton"
 
 interface Writeup {
   id: string

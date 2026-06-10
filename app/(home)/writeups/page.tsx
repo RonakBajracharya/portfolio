@@ -1,6 +1,4 @@
 import Link from "next/link"
-import { Tag } from "lucide-react"
-import Navbar from "@/components/navbar"
 import { getWriteups } from "@/lib/db"
 import type { Writeup } from "@/lib/db"
 import WriteupsClient from "@/app/_component/WriteupsClient"
@@ -9,9 +7,7 @@ export default async function WriteupsPage() {
   const writeups: Writeup[] = await getWriteups()
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-
+    <>
       <div className="pt-32">
         <div className="max-w-7xl mx-auto px-6 py-16">
 
@@ -37,6 +33,6 @@ export default async function WriteupsPage() {
           <WriteupsClient writeups={writeups} />
         </div>
       </div>
-    </div>
+    </>
   )
 }

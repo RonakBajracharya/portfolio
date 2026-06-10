@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Pencil, Trash2, Plus, X, Search } from "lucide-react"
+import Image from "next/image"
 
 interface GalleryItem {
   id: string
@@ -204,9 +205,11 @@ export default function AdminGallery() {
             className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden group hover:border-teal-500/50 transition-all"
           >
             <div className="aspect-video bg-slate-700 relative overflow-hidden">
-              <img
+              <Image
                 src={item.imageUrl}
                 alt={item.title}
+                width={500}
+                height={500}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   ;(e.target as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100'><rect fill='%23374151' width='200' height='100'/><text fill='%239CA3AF' x='100' y='55' text-anchor='middle' font-size='14'>No Image</text></svg>"
