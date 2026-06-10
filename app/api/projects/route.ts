@@ -3,8 +3,6 @@ import { getProjects, createProject } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 
 export async function GET() {
-  console.log("DATABASE_URL =", process.env.DATABASE_URL);
-
   const projects = await getProjects();
   return NextResponse.json(projects);
 }
