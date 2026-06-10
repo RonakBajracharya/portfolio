@@ -12,7 +12,7 @@ export default function AdminMessages() {
   const [msgs, setMsgs] = useState<Message[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  const fetchMsgs = () => fetch("/api/contact").then(r => r.json()).then(setMsgs)
+  const fetchMsgs = async () => { const r = await fetch("/api/contact"); setMsgs(await r.json()) }
 
   useEffect(() => { fetchMsgs() }, [])
 

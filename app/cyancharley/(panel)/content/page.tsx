@@ -87,9 +87,10 @@ export default function AdminContent() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch("/api/site")
-      .then((r) => r.json())
-      .then(setConfig)
+    (async () => {
+      const r = await fetch("/api/site")
+      setConfig(await r.json())
+    })()
   }, [])
 
   const handleSave = async () => {

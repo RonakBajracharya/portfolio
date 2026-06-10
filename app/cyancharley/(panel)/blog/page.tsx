@@ -22,7 +22,7 @@ export default function AdminBlog() {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
-  const fetchPosts = () => { fetch("/api/blog").then(r => r.json()).then(setPosts) }
+  const fetchPosts = async () => { const r = await fetch("/api/blog"); setPosts(await r.json()) }
 
   useEffect(() => { fetchPosts() }, [])
 

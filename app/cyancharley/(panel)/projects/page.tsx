@@ -18,7 +18,7 @@ export default function AdminProjects() {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
-  const fetchProjects = () => { fetch("/api/projects").then(r => r.json()).then(setProjects) }
+  const fetchProjects = async () => { const r = await fetch("/api/projects"); setProjects(await r.json()) }
   useEffect(() => { fetchProjects() }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {

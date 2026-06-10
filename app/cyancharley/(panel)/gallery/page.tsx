@@ -34,10 +34,9 @@ export default function AdminGallery() {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
-  const fetchItems = () => {
-    fetch("/api/gallery")
-      .then((r) => r.json())
-      .then(setItems)
+  const fetchItems = async () => {
+    const r = await fetch("/api/gallery")
+    setItems(await r.json())
   }
 
   useEffect(() => {

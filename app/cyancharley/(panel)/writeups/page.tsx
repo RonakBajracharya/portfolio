@@ -42,10 +42,9 @@ export default function AdminWriteups() {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
-  const fetchWriteups = () => {
-    fetch("/api/writeups")
-      .then((r) => r.json())
-      .then(setWriteups)
+  const fetchWriteups = async () => {
+    const r = await fetch("/api/writeups")
+    setWriteups(await r.json())
   }
 
   useEffect(() => {
