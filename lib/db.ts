@@ -1,17 +1,129 @@
-import fs from "fs/promises"
-import path from "path"
 import { neon } from "@neondatabase/serverless"
 
-let _sql: ReturnType<typeof neon> | null = null
+const sql = neon(process.env.DATABASE_URL!)
 
-function getSql() {
-  if (!_sql && process.env.DATABASE_URL) {
-    _sql = neon(process.env.DATABASE_URL)
+let _initialized = false
+
+async function initDatabase() {
+  if (_initialized) return
+  _initialized = true
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS site_config (
+      id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+      config JSONB NOT NULL
+    )
+  `
+  await sql`
+    CREATE TABLE IF NOT EXISTS writeups (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      event TEXT NOT NULL,
+      category TEXT NOT NULL,
+      date TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      content TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '[]',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+  await sql`
+    CREATE TABLE IF NOT EXISTS gallery (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      category TEXT NOT NULL,
+      date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  const existing = await sql`SELECT id FROM site_config LIMIT 1` as Record<string, unknown>[]
+  if (existing.length === 0) {
+    await sql`INSERT INTO site_config (id, config) VALUES (1, ${JSON.stringify(defaultSiteConfig)})`
   }
-  return _sql
+
+  const wCount = await sql`SELECT COUNT(*)::int as count FROM writeups` as Record<string, unknown>[]
+  if (wCount[0] && (wCount[0] as { count: number }).count === 0) {
+    for (const w of defaultWriteups) {
+      await sql`
+        INSERT INTO writeups (id, title, event, category, date, summary, content, tags, created_at, updated_at)
+        VALUES (${w.id}, ${w.title}, ${w.event}, ${w.category}, ${w.date}, ${w.summary}, ${w.content}, ${JSON.stringify(w.tags)}, ${w.createdAt}, ${w.updatedAt})
+      `
+    }
+  }
+
+  const gCount = await sql`SELECT COUNT(*)::int as count FROM gallery` as Record<string, unknown>[]
+  if (gCount[0] && (gCount[0] as { count: number }).count === 0) {
+    for (const g of defaultGallery) {
+      await sql`
+        INSERT INTO gallery (id, title, description, image_url, category, date, created_at, updated_at)
+        VALUES (${g.id}, ${g.title}, ${g.description}, ${g.imageUrl}, ${g.category}, ${g.date}, ${g.createdAt}, ${g.updatedAt})
+      `
+    }
+  }
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS blog (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      content TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '[]',
+      date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  const bCount = await sql`SELECT COUNT(*)::int as count FROM blog` as Record<string, unknown>[]
+  if (bCount[0] && (bCount[0] as { count: number }).count === 0) {
+    for (const b of defaultBlogPosts) {
+      await sql`
+        INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at)
+        VALUES (${b.id}, ${b.title}, ${b.summary}, ${b.content}, ${JSON.stringify(b.tags)}, ${b.date}, ${b.createdAt}, ${b.updatedAt})
+      `
+    }
+  }
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL DEFAULT '',
+      email TEXT NOT NULL,
+      message TEXT NOT NULL,
+      read BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      link TEXT NOT NULL DEFAULT '',
+      tags TEXT NOT NULL DEFAULT '[]',
+      date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  const pCount = await sql`SELECT COUNT(*)::int as count FROM projects` as Record<string, unknown>[]
+  if (pCount[0] && (pCount[0] as { count: number }).count === 0) {
+    for (const p of defaultProjects) {
+      await sql`
+        INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at)
+        VALUES (${p.id}, ${p.title}, ${p.description}, ${p.link}, ${JSON.stringify(p.tags)}, ${p.date}, ${p.createdAt}, ${p.updatedAt})
+      `
+    }
+  }
 }
-
-
 
 // ---- Types ----
 
@@ -202,14 +314,14 @@ export const defaultSiteConfig: SiteConfig = {
     {
       id: "cert-1",
       title: "Certified in Cybersecurity (CC)",
-      issuer: "ISC² Certification",
+      issuer: "ISC2 Certification",
       date: "February 27, 2025",
       link: "https://www.credly.com/badges/b2dded5b-c577-4802-83cb-c10d10c4ab8b/public_url",
       linkText: "Link",
       details: {
         heading: "Certification Details:",
         items: [
-          "Entry-level cybersecurity certification from ISC²",
+          "Entry-level cybersecurity certification from ISC2",
           "Covers fundamental security principles and practices",
           "Validates knowledge in risk management, security controls, and incident response",
           "Demonstrates commitment to cybersecurity best practices",
@@ -427,10 +539,6 @@ const defaultGallery: GalleryItem[] = [
   },
 ]
 
-// =====================================================
-// Database implementation (Neon Postgres)
-// =====================================================
-
 type DbWriteup = {
   id: string
   title: string
@@ -455,165 +563,6 @@ type DbGalleryRow = {
   updated_at: string
 }
 
-async function initDatabase() {
-  const sql = getSql()
-  if (!sql) return
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS site_config (
-      id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-      config JSONB NOT NULL
-    )
-  `
-  await sql`
-    CREATE TABLE IF NOT EXISTS writeups (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      event TEXT NOT NULL,
-      category TEXT NOT NULL,
-      date TEXT NOT NULL,
-      summary TEXT NOT NULL,
-      content TEXT NOT NULL,
-      tags TEXT NOT NULL DEFAULT '[]',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `
-  await sql`
-    CREATE TABLE IF NOT EXISTS gallery (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      image_url TEXT NOT NULL,
-      category TEXT NOT NULL,
-      date TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `
-
-  const existing = await sql`SELECT id FROM site_config LIMIT 1` as Record<string, unknown>[]
-  if (existing.length === 0) {
-    await sql`INSERT INTO site_config (id, config) VALUES (1, ${JSON.stringify(defaultSiteConfig)})`
-  }
-
-  const wCount = await sql`SELECT COUNT(*)::int as count FROM writeups` as Record<string, unknown>[]
-  if (wCount[0] && (wCount[0] as { count: number }).count === 0) {
-    for (const w of defaultWriteups) {
-      await sql`
-        INSERT INTO writeups (id, title, event, category, date, summary, content, tags, created_at, updated_at)
-        VALUES (${w.id}, ${w.title}, ${w.event}, ${w.category}, ${w.date}, ${w.summary}, ${w.content}, ${JSON.stringify(w.tags)}, ${w.createdAt}, ${w.updatedAt})
-      `
-    }
-  }
-
-  const gCount = await sql`SELECT COUNT(*)::int as count FROM gallery` as Record<string, unknown>[]
-  if (gCount[0] && (gCount[0] as { count: number }).count === 0) {
-    for (const g of defaultGallery) {
-      await sql`
-        INSERT INTO gallery (id, title, description, image_url, category, date, created_at, updated_at)
-        VALUES (${g.id}, ${g.title}, ${g.description}, ${g.imageUrl}, ${g.category}, ${g.date}, ${g.createdAt}, ${g.updatedAt})
-      `
-    }
-  }
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS blog (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      summary TEXT NOT NULL,
-      content TEXT NOT NULL,
-      tags TEXT NOT NULL DEFAULT '[]',
-      date TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `
-
-  const bCount = await sql`SELECT COUNT(*)::int as count FROM blog` as Record<string, unknown>[]
-  if (bCount[0] && (bCount[0] as { count: number }).count === 0) {
-    for (const b of defaultBlogPosts) {
-      await sql`
-        INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at)
-        VALUES (${b.id}, ${b.title}, ${b.summary}, ${b.content}, ${JSON.stringify(b.tags)}, ${b.date}, ${b.createdAt}, ${b.updatedAt})
-      `
-    }
-  }
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS messages (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      phone TEXT NOT NULL DEFAULT '',
-      email TEXT NOT NULL,
-      message TEXT NOT NULL,
-      read BOOLEAN NOT NULL DEFAULT false,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS projects (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      link TEXT NOT NULL DEFAULT '',
-      tags TEXT NOT NULL DEFAULT '[]',
-      date TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `
-
-  const pCount = await sql`SELECT COUNT(*)::int as count FROM projects` as Record<string, unknown>[]
-  if (pCount[0] && (pCount[0] as { count: number }).count === 0) {
-    for (const p of defaultProjects) {
-      await sql`
-        INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at)
-        VALUES (${p.id}, ${p.title}, ${p.description}, ${p.link}, ${JSON.stringify(p.tags)}, ${p.date}, ${p.createdAt}, ${p.updatedAt})
-      `
-    }
-  }
-}
-
-// ---- File-based fallback ----
-
-const DATA_DIR = path.join(process.cwd(), "data")
-let _fsOk: boolean | null = null
-
-async function isFsWritable(): Promise<boolean> {
-  if (_fsOk !== null) return _fsOk
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true })
-    const testFile = path.join(DATA_DIR, ".write-test")
-    await fs.writeFile(testFile, "ok", "utf-8")
-    await fs.unlink(testFile)
-    _fsOk = true
-  } catch {
-    _fsOk = false
-  }
-  return _fsOk
-}
-
-async function readFile<T>(filename: string, fallback: T): Promise<T> {
-  if (!(await isFsWritable())) return fallback
-  const filePath = path.join(DATA_DIR, filename)
-  try {
-    const raw = await fs.readFile(filePath, "utf-8")
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-async function writeFile<T>(filename: string, data: T): Promise<void> {
-  if (!(await isFsWritable())) return
-  try {
-    const filePath = path.join(DATA_DIR, filename)
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch {}
-}
-
 // =====================================================
 // Public API
 // =====================================================
@@ -621,15 +570,10 @@ async function writeFile<T>(filename: string, data: T): Promise<void> {
 // ---- Site Config ----
 
 export async function getSiteConfig(): Promise<SiteConfig> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT config FROM site_config WHERE id = 1` as Record<string, unknown>[]
-    if (rows.length > 0) return migrateConfig(rows[0].config as Record<string, unknown>)
-    return defaultSiteConfig
-  }
-  const raw = await readFile<Record<string, unknown>>("site.json", defaultSiteConfig as unknown as Record<string, unknown>)
-  return migrateConfig(raw)
+  await initDatabase()
+  const rows = await sql`SELECT config FROM site_config WHERE id = 1` as Record<string, unknown>[]
+  if (rows.length > 0) return migrateConfig(rows[0].config as Record<string, unknown>)
+  return defaultSiteConfig
 }
 
 function migrateConfig(raw: Record<string, unknown>): SiteConfig {
@@ -642,219 +586,145 @@ function migrateConfig(raw: Record<string, unknown>): SiteConfig {
 }
 
 export async function updateSiteConfig(config: SiteConfig): Promise<void> {
-  const sql = getSql()
-  if (sql) {
-    await sql`UPDATE site_config SET config = ${JSON.stringify(config)} WHERE id = 1`
-    return
-  }
-  await writeFile("site.json", config)
+  await initDatabase()
+  await sql`UPDATE site_config SET config = ${JSON.stringify(config)} WHERE id = 1`
 }
 
 // ---- Writeups ----
 
 export async function getWriteups(): Promise<Writeup[]> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM writeups ORDER BY created_at DESC` as Record<string, unknown>[]
-    return (rows as DbWriteup[]).map((r) => ({
-      id: r.id,
-      title: r.title,
-      event: r.event,
-      category: r.category,
-      date: r.date,
-      summary: r.summary,
-      content: r.content,
-      tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }))
-  }
-  return readFile<Writeup[]>("writeups.json", defaultWriteups)
+  await initDatabase()
+  const rows = await sql`SELECT * FROM writeups ORDER BY created_at DESC` as Record<string, unknown>[]
+  return (rows as DbWriteup[]).map((r) => ({
+    id: r.id,
+    title: r.title,
+    event: r.event,
+    category: r.category,
+    date: r.date,
+    summary: r.summary,
+    content: r.content,
+    tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }))
 }
 
 export async function getWriteupById(id: string): Promise<Writeup | null> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM writeups WHERE id = ${id}` as Record<string, unknown>[]
-    if (rows.length === 0) return null
-    const r = rows[0] as DbWriteup
-    return {
-      id: r.id,
-      title: r.title,
-      event: r.event,
-      category: r.category,
-      date: r.date,
-      summary: r.summary,
-      content: r.content,
-      tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }
+  await initDatabase()
+  const rows = await sql`SELECT * FROM writeups WHERE id = ${id}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as DbWriteup
+  return {
+    id: r.id,
+    title: r.title,
+    event: r.event,
+    category: r.category,
+    date: r.date,
+    summary: r.summary,
+    content: r.content,
+    tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
   }
-  const writeups = await getWriteups()
-  return writeups.find((w) => w.id === id) || null
 }
 
 export async function createWriteup(data: Omit<Writeup, "id" | "createdAt" | "updatedAt">): Promise<Writeup> {
   const now = new Date().toISOString()
   const id = String(Date.now())
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`
-      INSERT INTO writeups (id, title, event, category, date, summary, content, tags, created_at, updated_at)
-      VALUES (${id}, ${data.title}, ${data.event}, ${data.category}, ${data.date}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${now}, ${now})
-    `
-    return { ...data, id, tags: data.tags, createdAt: now, updatedAt: now }
-  }
-  const writeups = await getWriteups()
-  const newWriteup: Writeup = { ...data, id, createdAt: now, updatedAt: now } as Writeup
-  writeups.push(newWriteup)
-  await writeFile("writeups.json", writeups)
-  return newWriteup
+  await initDatabase()
+  await sql`
+    INSERT INTO writeups (id, title, event, category, date, summary, content, tags, created_at, updated_at)
+    VALUES (${id}, ${data.title}, ${data.event}, ${data.category}, ${data.date}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${now}, ${now})
+  `
+  return { ...data, id, tags: data.tags, createdAt: now, updatedAt: now }
 }
 
 export async function updateWriteup(id: string, updates: Partial<Writeup>): Promise<Writeup | null> {
   const now = new Date().toISOString()
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const existing = await getWriteupById(id)
-    if (!existing) return null
-    const merged = { ...existing, ...updates, updatedAt: now }
-    await sql`
-      UPDATE writeups SET
-        title = ${merged.title}, event = ${merged.event}, category = ${merged.category},
-        date = ${merged.date}, summary = ${merged.summary}, content = ${merged.content},
-        tags = ${JSON.stringify(merged.tags)}, updated_at = ${now}
-      WHERE id = ${id}
-    `
-    return merged
-  }
-  const writeups = await getWriteups()
-  const index = writeups.findIndex((w) => w.id === id)
-  if (index === -1) return null
-  writeups[index] = { ...writeups[index], ...updates, id: writeups[index].id, updatedAt: now }
-  await writeFile("writeups.json", writeups)
-  return writeups[index]
+  await initDatabase()
+  const existing = await getWriteupById(id)
+  if (!existing) return null
+  const merged = { ...existing, ...updates, updatedAt: now }
+  await sql`
+    UPDATE writeups SET
+      title = ${merged.title}, event = ${merged.event}, category = ${merged.category},
+      date = ${merged.date}, summary = ${merged.summary}, content = ${merged.content},
+      tags = ${JSON.stringify(merged.tags)}, updated_at = ${now}
+    WHERE id = ${id}
+  `
+  return merged
 }
 
 export async function deleteWriteup(id: string): Promise<boolean> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`DELETE FROM writeups WHERE id = ${id}`
-    return true
-  }
-  const writeups = await getWriteups()
-  const index = writeups.findIndex((w) => w.id === id)
-  if (index === -1) return false
-  writeups.splice(index, 1)
-  await writeFile("writeups.json", writeups)
+  await initDatabase()
+  await sql`DELETE FROM writeups WHERE id = ${id}`
   return true
 }
 
 // ---- Gallery ----
 
 export async function getGallery(): Promise<GalleryItem[]> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM gallery ORDER BY created_at DESC` as Record<string, unknown>[]
-    return (rows as DbGalleryRow[]).map((r) => ({
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      imageUrl: r.image_url,
-      category: r.category,
-      date: r.date,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }))
-  }
-  return readFile<GalleryItem[]>("gallery.json", defaultGallery)
+  await initDatabase()
+  const rows = await sql`SELECT * FROM gallery ORDER BY created_at DESC` as Record<string, unknown>[]
+  return (rows as DbGalleryRow[]).map((r) => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    imageUrl: r.image_url,
+    category: r.category,
+    date: r.date,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }))
 }
 
 export async function getGalleryItemById(id: string): Promise<GalleryItem | null> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM gallery WHERE id = ${id}` as Record<string, unknown>[]
-    if (rows.length === 0) return null
-    const r = rows[0] as DbGalleryRow
-    return {
-      id: r.id,
-      title: r.title,
-      description: r.description,
-      imageUrl: r.image_url,
-      category: r.category,
-      date: r.date,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }
+  await initDatabase()
+  const rows = await sql`SELECT * FROM gallery WHERE id = ${id}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as DbGalleryRow
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    imageUrl: r.image_url,
+    category: r.category,
+    date: r.date,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
   }
-  const items = await getGallery()
-  return items.find((i) => i.id === id) || null
 }
 
 export async function createGalleryItem(data: Omit<GalleryItem, "id" | "createdAt" | "updatedAt">): Promise<GalleryItem> {
   const now = new Date().toISOString()
   const id = String(Date.now())
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`
-      INSERT INTO gallery (id, title, description, image_url, category, date, created_at, updated_at)
-      VALUES (${id}, ${data.title}, ${data.description}, ${data.imageUrl}, ${data.category}, ${data.date}, ${now}, ${now})
-    `
-    return { ...data, id, createdAt: now, updatedAt: now }
-  }
-  const items = await getGallery()
-  const newItem: GalleryItem = { ...data, id, createdAt: now, updatedAt: now } as GalleryItem
-  items.push(newItem)
-  await writeFile("gallery.json", items)
-  return newItem
+  await initDatabase()
+  await sql`
+    INSERT INTO gallery (id, title, description, image_url, category, date, created_at, updated_at)
+    VALUES (${id}, ${data.title}, ${data.description}, ${data.imageUrl}, ${data.category}, ${data.date}, ${now}, ${now})
+  `
+  return { ...data, id, createdAt: now, updatedAt: now }
 }
 
 export async function updateGalleryItem(id: string, updates: Partial<GalleryItem>): Promise<GalleryItem | null> {
   const now = new Date().toISOString()
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const existing = await getGalleryItemById(id)
-    if (!existing) return null
-    const merged = { ...existing, ...updates, updatedAt: now }
-    await sql`
-      UPDATE gallery SET
-        title = ${merged.title}, description = ${merged.description},
-        image_url = ${merged.imageUrl}, category = ${merged.category},
-        date = ${merged.date}, updated_at = ${now}
-      WHERE id = ${id}
-    `
-    return merged
-  }
-  const items = await getGallery()
-  const index = items.findIndex((i) => i.id === id)
-  if (index === -1) return null
-  items[index] = { ...items[index], ...updates, id: items[index].id, updatedAt: now }
-  await writeFile("gallery.json", items)
-  return items[index]
+  await initDatabase()
+  const existing = await getGalleryItemById(id)
+  if (!existing) return null
+  const merged = { ...existing, ...updates, updatedAt: now }
+  await sql`
+    UPDATE gallery SET
+      title = ${merged.title}, description = ${merged.description},
+      image_url = ${merged.imageUrl}, category = ${merged.category},
+      date = ${merged.date}, updated_at = ${now}
+    WHERE id = ${id}
+  `
+  return merged
 }
 
 export async function deleteGalleryItem(id: string): Promise<boolean> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`DELETE FROM gallery WHERE id = ${id}`
-    return true
-  }
-  const items = await getGallery()
-  const index = items.findIndex((i) => i.id === id)
-  if (index === -1) return false
-  items.splice(index, 1)
-  await writeFile("gallery.json", items)
+  await initDatabase()
+  await sql`DELETE FROM gallery WHERE id = ${id}`
   return true
 }
 
@@ -895,83 +765,48 @@ const defaultBlogPosts: BlogPost[] = [
 ]
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM blog ORDER BY created_at DESC` as Record<string, unknown>[]
-    return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
-      id: r.id as string, title: r.title as string, summary: r.summary as string,
-      content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    }))
-  }
-  return readFile<BlogPost[]>("blog.json", defaultBlogPosts)
+  await initDatabase()
+  const rows = await sql`SELECT * FROM blog ORDER BY created_at DESC` as Record<string, unknown>[]
+  return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
+    id: r.id as string, title: r.title as string, summary: r.summary as string,
+    content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  }))
 }
 
 export async function getBlogPostById(id: string): Promise<BlogPost | null> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM blog WHERE id = ${id}` as Record<string, unknown>[]
-    if (rows.length === 0) return null
-    const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
-    return {
-      id: r.id as string, title: r.title as string, summary: r.summary as string,
-      content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    }
+  await initDatabase()
+  const rows = await sql`SELECT * FROM blog WHERE id = ${id}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+  return {
+    id: r.id as string, title: r.title as string, summary: r.summary as string,
+    content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
   }
-  const posts = await getBlogPosts()
-  return posts.find((p) => p.id === id) || null
 }
 
 export async function createBlogPost(data: Omit<BlogPost, "id" | "createdAt" | "updatedAt">): Promise<BlogPost> {
   const now = new Date().toISOString()
   const id = "b" + String(Date.now())
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
-    return { ...data, id, createdAt: now, updatedAt: now }
-  }
-  const posts = await getBlogPosts()
-  const np: BlogPost = { ...data, id, createdAt: now, updatedAt: now } as BlogPost
-  posts.push(np)
-  await writeFile("blog.json", posts)
-  return np
+  await initDatabase()
+  await sql`INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
+  return { ...data, id, createdAt: now, updatedAt: now }
 }
 
 export async function updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost | null> {
   const now = new Date().toISOString()
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const existing = await getBlogPostById(id)
-    if (!existing) return null
-    const merged = { ...existing, ...updates, updatedAt: now }
-    await sql`UPDATE blog SET title = ${merged.title}, summary = ${merged.summary}, content = ${merged.content}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
-    return merged
-  }
-  const posts = await getBlogPosts()
-  const index = posts.findIndex((p) => p.id === id)
-  if (index === -1) return null
-  posts[index] = { ...posts[index], ...updates, id: posts[index].id, updatedAt: now }
-  await writeFile("blog.json", posts)
-  return posts[index]
+  await initDatabase()
+  const existing = await getBlogPostById(id)
+  if (!existing) return null
+  const merged = { ...existing, ...updates, updatedAt: now }
+  await sql`UPDATE blog SET title = ${merged.title}, summary = ${merged.summary}, content = ${merged.content}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
+  return merged
 }
 
 export async function deleteBlogPost(id: string): Promise<boolean> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`DELETE FROM blog WHERE id = ${id}`
-    return true
-  }
-  const posts = await getBlogPosts()
-  const index = posts.findIndex((p) => p.id === id)
-  if (index === -1) return false
-  posts.splice(index, 1)
-  await writeFile("blog.json", posts)
+  await initDatabase()
+  await sql`DELETE FROM blog WHERE id = ${id}`
   return true
 }
 
@@ -988,79 +823,44 @@ export interface ContactMessage {
 }
 
 export async function getMessages(): Promise<ContactMessage[]> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM messages ORDER BY created_at DESC` as Record<string, unknown>[]
-    return (rows as { created_at: string; [k: string]: unknown }[]).map((r) => ({
-      id: r.id as string, name: r.name as string, phone: r.phone as string,
-      email: r.email as string, message: r.message as string,
-      read: (r.read as boolean) || false, createdAt: r.created_at as string,
-    }))
-  }
-  return readFile<ContactMessage[]>("messages.json", [])
+  await initDatabase()
+  const rows = await sql`SELECT * FROM messages ORDER BY created_at DESC` as Record<string, unknown>[]
+  return (rows as { created_at: string; [k: string]: unknown }[]).map((r) => ({
+    id: r.id as string, name: r.name as string, phone: r.phone as string,
+    email: r.email as string, message: r.message as string,
+    read: (r.read as boolean) || false, createdAt: r.created_at as string,
+  }))
 }
 
 export async function getMessageById(id: string): Promise<ContactMessage | null> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM messages WHERE id = ${id}` as Record<string, unknown>[]
-    if (rows.length === 0) return null
-    const r = rows[0] as { created_at: string; [k: string]: unknown }
-    return {
-      id: r.id as string, name: r.name as string, phone: r.phone as string,
-      email: r.email as string, message: r.message as string,
-      read: (r.read as boolean) || false, createdAt: r.created_at as string,
-    }
+  await initDatabase()
+  const rows = await sql`SELECT * FROM messages WHERE id = ${id}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as { created_at: string; [k: string]: unknown }
+  return {
+    id: r.id as string, name: r.name as string, phone: r.phone as string,
+    email: r.email as string, message: r.message as string,
+    read: (r.read as boolean) || false, createdAt: r.created_at as string,
   }
-  const msgs = await getMessages()
-  return msgs.find((m) => m.id === id) || null
 }
 
 export async function createMessage(data: Omit<ContactMessage, "id" | "read" | "createdAt">): Promise<ContactMessage> {
   const now = new Date().toISOString()
   const id = "m" + String(Date.now())
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`INSERT INTO messages (id, name, phone, email, message, read, created_at) VALUES (${id}, ${data.name}, ${data.phone}, ${data.email}, ${data.message}, false, ${now})`
-    return { ...data, id, read: false, createdAt: now }
-  }
-  const msgs = await getMessages()
-  const nm: ContactMessage = { ...data, id, read: false, createdAt: now }
-  msgs.push(nm)
-  await writeFile("messages.json", msgs)
-  return nm
+  await initDatabase()
+  await sql`INSERT INTO messages (id, name, phone, email, message, read, created_at) VALUES (${id}, ${data.name}, ${data.phone}, ${data.email}, ${data.message}, false, ${now})`
+  return { ...data, id, read: false, createdAt: now }
 }
 
 export async function markMessageRead(id: string): Promise<boolean> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`UPDATE messages SET read = true WHERE id = ${id}`
-    return true
-  }
-  const msgs = await getMessages()
-  const index = msgs.findIndex((m) => m.id === id)
-  if (index === -1) return false
-  msgs[index].read = true
-  await writeFile("messages.json", msgs)
+  await initDatabase()
+  await sql`UPDATE messages SET read = true WHERE id = ${id}`
   return true
 }
 
 export async function deleteMessage(id: string): Promise<boolean> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`DELETE FROM messages WHERE id = ${id}`
-    return true
-  }
-  const msgs = await getMessages()
-  const index = msgs.findIndex((m) => m.id === id)
-  if (index === -1) return false
-  msgs.splice(index, 1)
-  await writeFile("messages.json", msgs)
+  await initDatabase()
+  await sql`DELETE FROM messages WHERE id = ${id}`
   return true
 }
 
@@ -1111,83 +911,48 @@ const defaultProjects: Project[] = [
 ]
 
 export async function getProjects(): Promise<Project[]> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM projects ORDER BY created_at DESC` as Record<string, unknown>[]
-    return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
-      id: r.id as string, title: r.title as string, description: r.description as string,
-      link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    }))
-  }
-  return readFile<Project[]>("projects.json", defaultProjects)
+  await initDatabase()
+  const rows = await sql`SELECT * FROM projects ORDER BY created_at DESC` as Record<string, unknown>[]
+  return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
+    id: r.id as string, title: r.title as string, description: r.description as string,
+    link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  }))
 }
 
 export async function getProjectById(id: string): Promise<Project | null> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const rows = await sql`SELECT * FROM projects WHERE id = ${id}` as Record<string, unknown>[]
-    if (rows.length === 0) return null
-    const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
-    return {
-      id: r.id as string, title: r.title as string, description: r.description as string,
-      link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
-    }
+  await initDatabase()
+  const rows = await sql`SELECT * FROM projects WHERE id = ${id}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+  return {
+    id: r.id as string, title: r.title as string, description: r.description as string,
+    link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
   }
-  const projects = await getProjects()
-  return projects.find((p) => p.id === id) || null
 }
 
 export async function createProject(data: Omit<Project, "id" | "createdAt" | "updatedAt">): Promise<Project> {
   const now = new Date().toISOString()
   const id = "p" + String(Date.now())
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.description}, ${data.link}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
-    return { ...data, id, createdAt: now, updatedAt: now }
-  }
-  const projects = await getProjects()
-  const np: Project = { ...data, id, createdAt: now, updatedAt: now } as Project
-  projects.push(np)
-  await writeFile("projects.json", projects)
-  return np
+  await initDatabase()
+  await sql`INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.description}, ${data.link}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
+  return { ...data, id, createdAt: now, updatedAt: now }
 }
 
 export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
   const now = new Date().toISOString()
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const existing = await getProjectById(id)
-    if (!existing) return null
-    const merged = { ...existing, ...updates, updatedAt: now }
-    await sql`UPDATE projects SET title = ${merged.title}, description = ${merged.description}, link = ${merged.link}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
-    return merged
-  }
-  const projects = await getProjects()
-  const index = projects.findIndex((p) => p.id === id)
-  if (index === -1) return null
-  projects[index] = { ...projects[index], ...updates, id: projects[index].id, updatedAt: now }
-  await writeFile("projects.json", projects)
-  return projects[index]
+  await initDatabase()
+  const existing = await getProjectById(id)
+  if (!existing) return null
+  const merged = { ...existing, ...updates, updatedAt: now }
+  await sql`UPDATE projects SET title = ${merged.title}, description = ${merged.description}, link = ${merged.link}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
+  return merged
 }
 
 export async function deleteProject(id: string): Promise<boolean> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    await sql`DELETE FROM projects WHERE id = ${id}`
-    return true
-  }
-  const projects = await getProjects()
-  const index = projects.findIndex((p) => p.id === id)
-  if (index === -1) return false
-  projects.splice(index, 1)
-  await writeFile("projects.json", projects)
+  await initDatabase()
+  await sql`DELETE FROM projects WHERE id = ${id}`
   return true
 }
 
@@ -1202,37 +967,20 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const sql = getSql()
-  if (sql) {
-    await initDatabase()
-    const results = await Promise.all([
-      sql`SELECT COUNT(*)::int AS count FROM blog`,
-      sql`SELECT COUNT(*)::int AS count FROM writeups`,
-      sql`SELECT COUNT(*)::int AS count FROM projects`,
-      sql`SELECT COUNT(*)::int AS count FROM gallery`,
-      sql`SELECT COUNT(*)::int AS count FROM messages`,
-    ]) as unknown as [Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[]]
-    const [b, w, p, g, m] = results
-    return {
-      blog: (b[0] as { count: number }).count,
-      writeups: (w[0] as { count: number }).count,
-      projects: (p[0] as { count: number }).count,
-      gallery: (g[0] as { count: number }).count,
-      messages: (m[0] as { count: number }).count,
-    }
-  }
-  const [blogPosts, writeups, projects, gallery, messages] = await Promise.all([
-    getBlogPosts(),
-    getWriteups(),
-    getProjects(),
-    getGallery(),
-    getMessages(),
-  ])
+  await initDatabase()
+  const results = await Promise.all([
+    sql`SELECT COUNT(*)::int AS count FROM blog`,
+    sql`SELECT COUNT(*)::int AS count FROM writeups`,
+    sql`SELECT COUNT(*)::int AS count FROM projects`,
+    sql`SELECT COUNT(*)::int AS count FROM gallery`,
+    sql`SELECT COUNT(*)::int AS count FROM messages`,
+  ]) as unknown as [Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[]]
+  const [b, w, p, g, m] = results
   return {
-    blog: blogPosts.length,
-    writeups: writeups.length,
-    projects: projects.length,
-    gallery: gallery.length,
-    messages: messages.length,
+    blog: (b[0] as { count: number }).count,
+    writeups: (w[0] as { count: number }).count,
+    projects: (p[0] as { count: number }).count,
+    gallery: (g[0] as { count: number }).count,
+    messages: (m[0] as { count: number }).count,
   }
 }
