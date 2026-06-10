@@ -15,9 +15,10 @@ interface Project {
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const project: Project | null = await getProjectById(params.id);
+  const { id } = await params;
+  const project: Project | null = await getProjectById(id);
 
   if (!project) {
     notFound();

@@ -1203,22 +1203,36 @@ export interface DashboardStats {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const sql = getSql()
-
-  await initDatabase()
-
-  const [b, w, p, g, m] = await Promise.all([
-  sql`SELECT COUNT(*)::int AS count FROM blog`,
-  sql`SELECT COUNT(*)::int AS count FROM writeups`,
-  sql`SELECT COUNT(*)::int AS count FROM projects`,
-  sql`SELECT COUNT(*)::int AS count FROM gallery`,
-  sql`SELECT COUNT(*)::int AS count FROM messages`,
-])
-
+  if (sql) {
+    await initDatabase()
+    const results = await Promise.all([
+      sql`SELECT COUNT(*)::int AS count FROM blog`,
+      sql`SELECT COUNT(*)::int AS count FROM writeups`,
+      sql`SELECT COUNT(*)::int AS count FROM projects`,
+      sql`SELECT COUNT(*)::int AS count FROM gallery`,
+      sql`SELECT COUNT(*)::int AS count FROM messages`,
+    ]) as unknown as [Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[], Record<string, unknown>[]]
+    const [b, w, p, g, m] = results
+    return {
+      blog: (b[0] as { count: number }).count,
+      writeups: (w[0] as { count: number }).count,
+      projects: (p[0] as { count: number }).count,
+      gallery: (g[0] as { count: number }).count,
+      messages: (m[0] as { count: number }).count,
+    }
+  }
+  const [blogPosts, writeups, projects, gallery, messages] = await Promise.all([
+    getBlogPosts(),
+    getWriteups(),
+    getProjects(),
+    getGallery(),
+    getMessages(),
+  ])
   return {
-    blog: b[0].count,
-    writeups: w[0].count,
-    projects: p[0].count,
-    gallery: g[0].count,
-    messages: m[0].count,
+    blog: blogPosts.length,
+    writeups: writeups.length,
+    projects: projects.length,
+    gallery: gallery.length,
+    messages: messages.length,
   }
 }

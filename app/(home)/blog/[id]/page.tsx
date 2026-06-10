@@ -15,9 +15,10 @@ interface Post {
 export default async function BlogDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const post: Post | null = await getBlogPostById(params.id);
+  const { id } = await params;
+  const post: Post | null = await getBlogPostById(id);
 
   if (!post) {
     notFound();
