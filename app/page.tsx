@@ -11,30 +11,22 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import type { SiteConfig, BlogPost, Writeup, Project } from "@/lib/db"
 
-const defaultConfig: SiteConfig = {
-  hero: { name: "", title: "", description: "", cvUrl: "", portraitUrl: "" },
-  about: { heading: "", description: "", portraitUrl: "" },
-  social: { linkedin: "", github: "", medium: "" },
-  skills: [], education: [], experience: [], certifications: [], achievements: [],
-}
-
 export default function Portfolio() {
-  const [config, setConfig] = useState<SiteConfig>(defaultConfig)
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
-  const [writeups, setWriteups] = useState<Writeup[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
+  const [config, setConfig] = useState<SiteConfig | null>(null)
+  const [blogPosts, setBlogPosts] = useState<BlogPost[] | null>(null)
+  const [writeups, setWriteups] = useState<Writeup[] | null>(null)
+  const [projects, setProjects] = useState<Project[] | null>(null)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/site").then(r => r.json()).then(setConfig),
-      fetch("/api/blog").then(r => r.json()).then(setBlogPosts),
-      fetch("/api/writeups").then(r => r.json()).then(setWriteups),
-      fetch("/api/projects").then(r => r.json()).then(setProjects),
-    ]).finally(() => { setLoading(false); setIsVisible(true) })
+    fetch("/api/site").then(r => r.json()).then(d => { setConfig(d); setIsVisible(true) }).catch(() => setConfig(null))
+    fetch("/api/blog").then(r => r.json()).then(setBlogPosts).catch(() => setBlogPosts(null))
+    fetch("/api/writeups").then(r => r.json()).then(setWriteups).catch(() => setWriteups(null))
+    fetch("/api/projects").then(r => r.json()).then(setProjects).catch(() => setProjects(null))
   }, [])
+
+  if (!config) return <PageSkeleton />
 
   const toggleCard = (id: string) => setExpandedCard(expandedCard === id ? null : id)
   const scrollTo = (id: string) => {
@@ -50,8 +42,6 @@ export default function Portfolio() {
     )},
   ]
 
-  if (loading) return <PageSkeleton />
-
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Navbar />
@@ -61,21 +51,15 @@ export default function Portfolio() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center relative z-10">
           <div className={`space-y-6 transition-all duration-1000 order-2 md:order-1 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}`}>
             <p className="text-xs font-medium text-muted-foreground tracking-widest uppercase">{config.hero.title}</p>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-none">{config.hero.name || "Hello"}</h1>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-none">{config.hero.name}</h1>
             <p className="text-muted-foreground text-lg leading-relaxed max-w-lg">{config.hero.description}</p>
             <div className="flex gap-4 pt-2">
-              <Button onClick={() => config.hero.cvUrl.startsWith("data:") ? window.location.href = config.hero.cvUrl : window.open(config.hero.cvUrl, "_blank")} className="bg-foreground hover:bg-foreground/90 text-background font-medium px-8 py-6 rounded-xl transition-all duration-300">
-                View CV
-              </Button>
-              <Button variant="outline" onClick={() => scrollTo("contact")} className="border-border text-foreground hover:bg-secondary px-8 py-6 rounded-xl bg-transparent transition-all duration-300">
-                Let&apos;s Talk
-              </Button>
+              <Button onClick={() => config.hero.cvUrl.startsWith("data:") ? window.location.href = config.hero.cvUrl : window.open(config.hero.cvUrl, "_blank")} className="bg-foreground hover:bg-foreground/90 text-background font-medium px-8 py-6 rounded-xl transition-all duration-300">View CV</Button>
+              <Button variant="outline" onClick={() => scrollTo("contact")} className="border-border text-foreground hover:bg-secondary px-8 py-6 rounded-xl bg-transparent transition-all duration-300">Let&apos;s Talk</Button>
             </div>
             <div className="flex gap-3 pt-6">
               {socials.map((s, i) => (
-                <a key={i} href={s.href} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-all duration-200">
-                  <s.icon size={16} />
-                </a>
+                <a key={i} href={s.href} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-all duration-200"><s.icon size={16} /></a>
               ))}
             </div>
           </div>
@@ -157,7 +141,7 @@ export default function Portfolio() {
       </section>
 
       {/* Projects — D */}
-      {projects.length > 0 && (
+      {projects !== null && projects.length > 0 && (
         <section id="projects" className="px-6 py-24">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-12">
@@ -166,15 +150,15 @@ export default function Portfolio() {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {projects.slice(0, 3).map(p => (
-                <div key={p.id} className="border border-border rounded-xl p-5 bg-background group">
-                  <h3 className="font-semibold mb-2">{p.title}</h3>
+                <Link key={p.id} href={p.link || `/projects`} target={p.link ? "_blank" : undefined} className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all bg-background group cursor-pointer">
+                  <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{p.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{p.description}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">{p.date}</span>
                     {p.tags.slice(0, 2).map(t => <span key={t} className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{t}</span>)}
-                    {p.link && <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-xs text-foreground underline underline-offset-4 ml-auto"><ExternalLink size={12} /></a>}
+                    {p.link && <ExternalLink size={12} className="text-muted-foreground ml-auto" />}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -182,7 +166,7 @@ export default function Portfolio() {
       )}
 
       {/* Blog — L */}
-      {blogPosts.length > 0 && (
+      {blogPosts !== null && blogPosts.length > 0 && (
         <section className="px-6 py-24 bg-secondary/30 border-y border-border">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-12">
@@ -191,7 +175,7 @@ export default function Portfolio() {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {blogPosts.slice(0, 3).map(p => (
-                <Link key={p.id} href={`/blog/${p.id}`} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
+                <Link key={p.id} href={`/blog/${p.id}`} className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
                   {p.tags.length > 0 && <div className="flex flex-wrap gap-1 mb-3">{p.tags.slice(0, 2).map(t => <span key={t} className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{t}</span>)}</div>}
                   <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{p.title}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-3">{p.summary}</p>
@@ -204,7 +188,7 @@ export default function Portfolio() {
       )}
 
       {/* Writeups — D */}
-      {writeups.length > 0 && (
+      {writeups !== null && writeups.length > 0 && (
         <section className="px-6 py-24">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-12">
@@ -213,7 +197,7 @@ export default function Portfolio() {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {writeups.slice(0, 3).map(w => (
-                <Link key={w.id} href={`/writeups/${w.id}`} className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
+                <Link key={w.id} href={`/writeups/${w.id}`} className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group">
                   <div className="flex items-center gap-2 mb-3"><span className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{w.category}</span><span className="text-xs text-muted-foreground">{w.date}</span></div>
                   <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{w.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3">{w.event}</p>
