@@ -1,10 +1,11 @@
 import { cookies } from "next/headers"
+import bcrypt from "bcryptjs"
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || "$2b$10$7JsPbh5Rv6K.EyFWvVpcSO5dwEoMR01bOgelxRr.ZU3fgxeBdmVhi"
 const COOKIE_NAME = "admin_token"
 
 function getAuthToken(): string {
-  return ADMIN_PASSWORD + "_session"
+  return ADMIN_PASSWORD_HASH + "_session"
 }
 
 export async function isAuthenticated(): Promise<boolean> {
@@ -14,7 +15,8 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 export async function login(password: string): Promise<boolean> {
-  if (password === ADMIN_PASSWORD) {
+  const match = await bcrypt.compare(password, ADMIN_PASSWORD_HASH)
+  if (match) {
     const cookieStore = await cookies()
     cookieStore.set(COOKIE_NAME, getAuthToken(), {
       httpOnly: true,
