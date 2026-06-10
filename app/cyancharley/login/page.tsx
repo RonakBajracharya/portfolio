@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 export default function AdminLogin() {
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -19,7 +20,7 @@ export default function AdminLogin() {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username, password }),
     })
 
     if (res.ok) {
@@ -36,9 +37,16 @@ export default function AdminLogin() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
-          <p className="text-gray-400 mt-2">Enter password to continue</p>
+          <p className="text-gray-400 mt-2">Sign in to continue</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="bg-slate-800 border-slate-600 text-white placeholder:text-gray-400"
+          />
           <Input
             type="password"
             placeholder="Password"
