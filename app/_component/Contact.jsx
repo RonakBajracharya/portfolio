@@ -25,7 +25,7 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="px-6 py-24 border-y border-border bg-secondary/30">
+    <section id="contact" className="px-6 py-24 border-t border-border bg-secondary/30">
       <div className="max-w-xl mx-auto">
         <h2 className="text-4xl font-bold text-center mb-3 tracking-tight">Get in Touch</h2>
         <p className="text-muted-foreground text-center mb-12">Have a question or want to work together?</p>

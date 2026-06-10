@@ -40,7 +40,6 @@ export default function WriteupDetail() {
           <div className="rich-content text-foreground/80 leading-relaxed" dangerouslySetInnerHTML={{ __html: w.contentHtml }} />
         </div>
       </div>
-      <footer className="px-6 py-8 border-t border-border text-center mt-12"><p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Ronak Bajracharya</p></footer>
     </div>
   )
 }
