@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/theme-toggle"
 
 const navLinks = [
   { label: "Home", href: "/" },
+  { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
   { label: "Writeups", href: "/writeups" },
   { label: "Gallery", href: "/gallery" },
@@ -21,8 +22,9 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-md z-50 border-b border-border">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-semibold text-foreground tracking-tight hover:text-muted-foreground transition-colors">
-          Ronak.
+        <Link href="/" className="flex items-center gap-2 group">
+          <span className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold text-sm">R</span>
+          <span className="text-lg font-semibold text-foreground tracking-tight">Ronak.</span>
         </Link>
 
         <div className="hidden md:flex items-center space-x-8">

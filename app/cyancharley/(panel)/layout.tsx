@@ -4,13 +4,14 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, BookOpen, Image, FileText, Mail, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, BookOpen, Image, FileText, Mail, FolderCode, LogOut, Menu, X } from "lucide-react"
 
 const sidebarLinks = [
   { href: "/cyancharley", label: "Dashboard", icon: LayoutDashboard },
   { href: "/cyancharley/content", label: "Content", icon: FileText },
   { href: "/cyancharley/blog", label: "Blog", icon: BookOpen },
   { href: "/cyancharley/writeups", label: "Writeups", icon: BookOpen },
+  { href: "/cyancharley/projects", label: "Projects", icon: FolderCode },
   { href: "/cyancharley/gallery", label: "Gallery", icon: Image },
   { href: "/cyancharley/messages", label: "Messages", icon: Mail },
 ]

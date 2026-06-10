@@ -254,20 +254,6 @@ export const defaultSiteConfig: SiteConfig = {
         ],
       },
     },
-    {
-      id: "achievement-2",
-      title: "Research Projects",
-      subtitle: "Academic & Professional Research",
-      period: "2024 - Present",
-      details: {
-        heading: "Notable Projects:",
-        items: [
-          "Quantum Resistant Cryptographic Measures: Researched and developed prototype cryptographic system using quantum resistant key exchange protocols",
-          "Network Architecture Development: Designed secure network architecture with VPN implementation and advanced routing protocols",
-          "Malware Analysis & Exploit Development: Static and dynamic malware analysis with vulnerability research and exploit development",
-        ],
-      },
-    },
   ],
 }
 
@@ -565,6 +551,29 @@ async function initDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      link TEXT NOT NULL DEFAULT '',
+      tags TEXT NOT NULL DEFAULT '[]',
+      date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  const pCount = await sql`SELECT COUNT(*)::int as count FROM projects` as Record<string, unknown>[]
+  if (pCount[0] && (pCount[0] as { count: number }).count === 0) {
+    for (const p of defaultProjects) {
+      await sql`
+        INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at)
+        VALUES (${p.id}, ${p.title}, ${p.description}, ${p.link}, ${JSON.stringify(p.tags)}, ${p.date}, ${p.createdAt}, ${p.updatedAt})
+      `
+    }
+  }
 }
 
 // ---- File-based fallback ----
@@ -1052,5 +1061,132 @@ export async function deleteMessage(id: string): Promise<boolean> {
   if (index === -1) return false
   msgs.splice(index, 1)
   await writeFile("messages.json", msgs)
+  return true
+}
+
+// ---- Projects ----
+
+export interface Project {
+  id: string
+  title: string
+  description: string
+  link: string
+  tags: string[]
+  date: string
+  createdAt: string
+  updatedAt: string
+}
+
+const defaultProjects: Project[] = [
+  {
+    id: "p1",
+    title: "Quantum Resistant Cryptographic System",
+    description: "Researched and developed a prototype cryptographic system using quantum-resistant key exchange protocols to secure communications against post-quantum threats.",
+    link: "",
+    tags: ["cryptography", "quantum", "research"],
+    date: "2025-02-01",
+    createdAt: "2025-02-01T00:00:00Z",
+    updatedAt: "2025-02-01T00:00:00Z",
+  },
+  {
+    id: "p2",
+    title: "Secure Network Architecture with VPN",
+    description: "Designed and implemented a secure network architecture with VPN integration, advanced routing protocols, and intrusion detection systems.",
+    link: "",
+    tags: ["networking", "VPN", "architecture"],
+    date: "2024-11-15",
+    createdAt: "2024-11-15T00:00:00Z",
+    updatedAt: "2024-11-15T00:00:00Z",
+  },
+  {
+    id: "p3",
+    title: "Malware Analysis & Exploit Development",
+    description: "Static and dynamic malware analysis with vulnerability research and exploit development for educational purposes in controlled environments.",
+    link: "",
+    tags: ["malware", "exploit-dev", "analysis"],
+    date: "2024-08-20",
+    createdAt: "2024-08-20T00:00:00Z",
+    updatedAt: "2024-08-20T00:00:00Z",
+  },
+]
+
+export async function getProjects(): Promise<Project[]> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const rows = await sql`SELECT * FROM projects ORDER BY created_at DESC` as Record<string, unknown>[]
+    return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
+      id: r.id as string, title: r.title as string, description: r.description as string,
+      link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+    }))
+  }
+  return readFile<Project[]>("projects.json", defaultProjects)
+}
+
+export async function getProjectById(id: string): Promise<Project | null> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const rows = await sql`SELECT * FROM projects WHERE id = ${id}` as Record<string, unknown>[]
+    if (rows.length === 0) return null
+    const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+    return {
+      id: r.id as string, title: r.title as string, description: r.description as string,
+      link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+      date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+    }
+  }
+  const projects = await getProjects()
+  return projects.find((p) => p.id === id) || null
+}
+
+export async function createProject(data: Omit<Project, "id" | "createdAt" | "updatedAt">): Promise<Project> {
+  const now = new Date().toISOString()
+  const id = "p" + String(Date.now())
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.description}, ${data.link}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
+    return { ...data, id, createdAt: now, updatedAt: now }
+  }
+  const projects = await getProjects()
+  const np: Project = { ...data, id, createdAt: now, updatedAt: now } as Project
+  projects.push(np)
+  await writeFile("projects.json", projects)
+  return np
+}
+
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
+  const now = new Date().toISOString()
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    const existing = await getProjectById(id)
+    if (!existing) return null
+    const merged = { ...existing, ...updates, updatedAt: now }
+    await sql`UPDATE projects SET title = ${merged.title}, description = ${merged.description}, link = ${merged.link}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
+    return merged
+  }
+  const projects = await getProjects()
+  const index = projects.findIndex((p) => p.id === id)
+  if (index === -1) return null
+  projects[index] = { ...projects[index], ...updates, id: projects[index].id, updatedAt: now }
+  await writeFile("projects.json", projects)
+  return projects[index]
+}
+
+export async function deleteProject(id: string): Promise<boolean> {
+  const sql = getSql()
+  if (sql) {
+    await initDatabase()
+    await sql`DELETE FROM projects WHERE id = ${id}`
+    return true
+  }
+  const projects = await getProjects()
+  const index = projects.findIndex((p) => p.id === id)
+  if (index === -1) return false
+  projects.splice(index, 1)
+  await writeFile("projects.json", projects)
   return true
 }
