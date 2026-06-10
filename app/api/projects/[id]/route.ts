@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server"
-import { updateProject, deleteProject } from "@/lib/db"
+import { getProjectById, updateProject, deleteProject } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
+
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const project = await getProjectById(id)
+  if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  return NextResponse.json(project)
+}
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth()

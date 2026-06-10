@@ -115,7 +115,7 @@ export default function AdminContent() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm -my-4 py-4">
         <h1 className="text-2xl font-bold">Site Content</h1>
         <Button onClick={handleSave} disabled={loading} className="bg-teal-500 hover:bg-teal-600 text-white">
           <Save size={16} className="mr-2" />
@@ -208,64 +208,29 @@ export default function AdminContent() {
 
       {/* Skills */}
       <Section title="Skills">
-        {config.skills.map((skill, i) => (
-          <div key={i} className="grid grid-cols-[1fr,120px,24px,24px,40px] gap-2 mb-2 items-end">
-            <div>
-              <Label>Name</Label>
+        <div className="space-y-2">
+          {config.skills.map((skill, i) => (
+            <div key={i} className="flex items-center gap-2">
               <Input
                 value={skill.name}
-                onChange={(e) => {
-                  const updated = [...config.skills]
-                  updated[i] = { ...updated[i], name: e.target.value }
-                  setConfig({ ...config, skills: updated })
-                }}
-                className="bg-slate-900 border-slate-600 text-white"
+                onChange={(e) => { const updated = [...config.skills]; updated[i] = { ...updated[i], name: e.target.value }; setConfig({ ...config, skills: updated }) }}
+                className="bg-slate-900 border-slate-600 text-white flex-1 h-8 text-sm"
+                placeholder="Skill name"
               />
-            </div>
-            <div>
-              <Label>%</Label>
               <Input
-                type="number"
-                min={0}
-                max={100}
+                type="number" min={0} max={100}
                 value={skill.percentage}
-                onChange={(e) => {
-                  const updated = [...config.skills]
-                  updated[i] = { ...updated[i], percentage: Number(e.target.value) }
-                  setConfig({ ...config, skills: updated })
-                }}
-                className="bg-slate-900 border-slate-600 text-white"
+                onChange={(e) => { const updated = [...config.skills]; updated[i] = { ...updated[i], percentage: Number(e.target.value) }; setConfig({ ...config, skills: updated }) }}
+                className="bg-slate-900 border-slate-600 text-white w-16 h-8 text-sm text-center"
               />
+              <span className="text-xs text-gray-400 w-6 text-right">%</span>
+              <Button variant="ghost" size="icon" disabled={i === 0} onClick={() => moveUp(config.skills, i, (arr) => setConfig({ ...config, skills: arr }))} className="h-7 w-6 text-gray-400 hover:text-white flex-shrink-0"><ArrowUp size={12} /></Button>
+              <Button variant="ghost" size="icon" disabled={i === config.skills.length - 1} onClick={() => moveDown(config.skills, i, (arr) => setConfig({ ...config, skills: arr }))} className="h-7 w-6 text-gray-400 hover:text-white flex-shrink-0"><ArrowDown size={12} /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setConfig({ ...config, skills: config.skills.filter((_, idx) => idx !== i) })} className="h-7 w-7 text-gray-400 hover:text-red-400 flex-shrink-0"><Trash2 size={14} /></Button>
             </div>
-            <Button variant="ghost" size="icon" disabled={i === 0} onClick={() => moveUp(config.skills, i, (arr) => setConfig({ ...config, skills: arr }))} className="h-9 w-6 text-gray-400 hover:text-white">
-              <ArrowUp size={12} />
-            </Button>
-            <Button variant="ghost" size="icon" disabled={i === config.skills.length - 1} onClick={() => moveDown(config.skills, i, (arr) => setConfig({ ...config, skills: arr }))} className="h-9 w-6 text-gray-400 hover:text-white">
-              <ArrowDown size={12} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const updated = config.skills.filter((_, idx) => idx !== i)
-                setConfig({ ...config, skills: updated })
-              }}
-              className="h-9 w-9 text-gray-400 hover:text-red-400"
-            >
-              <Trash2 size={14} />
-            </Button>
-          </div>
-        ))}
-        <Button
-          variant="outline"
-          onClick={() => {
-            setConfig({
-              ...config,
-              skills: [...config.skills, { ...defaultSkill }],
-            })
-          }}
-          className="mt-2 border-slate-600 text-gray-400 hover:text-white text-sm"
-        >
+          ))}
+        </div>
+        <Button variant="outline" onClick={() => setConfig({ ...config, skills: [...config.skills, { ...defaultSkill }] })} className="mt-3 border-slate-600 text-gray-400 hover:text-white text-sm">
           <Plus size={14} className="mr-1" /> Add Skill
         </Button>
       </Section>

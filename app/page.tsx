@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Linkedin, Github, Award, Trophy, ExternalLink } from "lucide-react"
+import { Linkedin, Github, Award, Trophy } from "lucide-react"
 import Contact from "./_component/Contact"
 import Navbar from "@/components/navbar"
 import { PageSkeleton } from "@/components/skeleton"
@@ -150,13 +150,12 @@ export default function Portfolio() {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {projects.slice(0, 3).map(p => (
-                <Link key={p.id} href={p.link || `/projects`} target={p.link ? "_blank" : undefined} className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all bg-background group cursor-pointer">
+                <Link key={p.id} href={`/projects/${p.id}`} className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all bg-background group cursor-pointer">
                   <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">{p.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{p.description}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs text-muted-foreground">{p.date}</span>
                     {p.tags.slice(0, 2).map(t => <span key={t} className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">{t}</span>)}
-                    {p.link && <ExternalLink size={12} className="text-muted-foreground ml-auto" />}
                   </div>
                 </Link>
               ))}
