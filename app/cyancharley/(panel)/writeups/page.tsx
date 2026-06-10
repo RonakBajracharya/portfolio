@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 import RichTextEditor from "@/components/rich-text-editor"
 import { Pencil, Trash2, Plus, X, Search } from "lucide-react"
 import { marked } from "marked"
 
 const isHtml = (str: string) => /<\/[a-z][a-z0-9]*>/i.test(str)
-
 const toHtml = (str: string) => isHtml(str) ? str : (marked(str) as string)
 
 interface Writeup {
@@ -47,9 +50,7 @@ export default function AdminWriteups() {
     setWriteups(await r.json())
   }
 
-  useEffect(() => {
-    fetchWriteups()
-  }, [])
+  useEffect(() => { fetchWriteups() }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,17 +67,9 @@ export default function AdminWriteups() {
     }
 
     if (editingId) {
-      await fetch(`/api/writeups/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+      await fetch(`/api/writeups/${editingId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
     } else {
-      await fetch("/api/writeups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+      await fetch("/api/writeups", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
     }
 
     setLoading(false)
@@ -117,176 +110,71 @@ export default function AdminWriteups() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">Writeups</h1>
-        <Button
-          onClick={() => {
-            setForm(emptyForm)
-            setEditingId(null)
-            setShowForm(!showForm)
-          }}
-          className="bg-teal-500 hover:bg-teal-600 text-white"
-        >
-          {showForm ? <X size={16} className="mr-2" /> : <Plus size={16} className="mr-2" />}
-          {showForm ? "Cancel" : "New Writeup"}
+        <Button onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(!showForm) }}>
+          {showForm ? <><X size={16} className="mr-2" />Cancel</> : <><Plus size={16} className="mr-2" />New Writeup</>}
         </Button>
       </div>
 
-      {/* Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8 space-y-4">
-          <h2 className="text-lg font-semibold text-teal-400 mb-4">
-            {editingId ? "Edit Writeup" : "New Writeup"}
-          </h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Title</label>
-              <Input
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="bg-slate-900 border-slate-600 text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Event</label>
-              <Input
-                value={form.event}
-                onChange={(e) => setForm({ ...form, event: e.target.value })}
-                className="bg-slate-900 border-slate-600 text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Category</label>
-              <Input
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="bg-slate-900 border-slate-600 text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Date</label>
-              <Input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="bg-slate-900 border-slate-600 text-white"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Summary</label>
-            <Input
-              value={form.summary}
-              onChange={(e) => setForm({ ...form, summary: e.target.value })}
-              className="bg-slate-900 border-slate-600 text-white"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Content (Markdown supported)</label>
-            <RichTextEditor
-              content={form.content}
-              onChange={(html) => setForm({ ...form, content: html })}
-              placeholder="Write your CTF writeup here..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Tags (comma-separated)</label>
-            <Input
-              value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              className="bg-slate-900 border-slate-600 text-white"
-              placeholder="Web, SQL Injection, Python"
-            />
-          </div>
-          <div className="flex gap-3">
-            <Button type="submit" disabled={loading} className="bg-teal-500 hover:bg-teal-600 text-white">
-              {loading ? "Saving..." : editingId ? "Update Writeup" : "Create Writeup"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowForm(false)
-                setForm(emptyForm)
-                setEditingId(null)
-              }}
-              className="border-slate-600 text-gray-400 hover:text-white"
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
+        <Card className="mb-8">
+          <CardHeader><CardTitle>{editingId ? "Edit Writeup" : "New Writeup"}</CardTitle></CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
+                <div className="space-y-2"><Label>Event</Label><Input value={form.event} onChange={(e) => setForm({ ...form, event: e.target.value })} required /></div>
+                <div className="space-y-2"><Label>Category</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required /></div>
+                <div className="space-y-2"><Label>Date</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required /></div>
+              </div>
+              <div className="space-y-2"><Label>Summary</Label><Input value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} required /></div>
+              <div className="space-y-2"><Label>Content (Markdown supported)</Label><RichTextEditor content={form.content} onChange={(html) => setForm({ ...form, content: html })} placeholder="Write your CTF writeup here..." /></div>
+              <div className="space-y-2"><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Web, SQL Injection, Python" /></div>
+              <div className="flex gap-3">
+                <Button type="submit" disabled={loading}>{loading ? "Saving..." : editingId ? "Update Writeup" : "Create Writeup"}</Button>
+                <Button type="button" variant="outline" onClick={() => { setShowForm(false); setForm(emptyForm); setEditingId(null) }}>Cancel</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Search */}
       <div className="relative mb-6">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-        <Input
-          placeholder="Search writeups..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-gray-500"
-        />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Search writeups..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      {/* Table */}
-      <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left p-4 text-sm text-gray-400 font-medium">Title</th>
-                <th className="text-left p-4 text-sm text-gray-400 font-medium">Event</th>
-                <th className="text-left p-4 text-sm text-gray-400 font-medium hidden md:table-cell">Category</th>
-                <th className="text-left p-4 text-sm text-gray-400 font-medium hidden md:table-cell">Date</th>
-                <th className="text-right p-4 text-sm text-gray-400 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((w) => (
-                <tr key={w.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                  <td className="p-4 text-sm">{w.title}</td>
-                  <td className="p-4 text-sm text-gray-300">{w.event}</td>
-                  <td className="p-4 text-sm hidden md:table-cell">
-                    <span className="px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded text-xs">{w.category}</span>
-                  </td>
-                  <td className="p-4 text-sm text-gray-400 hidden md:table-cell">{w.date}</td>
-                  <td className="p-4">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(w)}
-                        className="h-8 w-8 text-gray-400 hover:text-white hover:bg-slate-700"
-                      >
-                        <Pencil size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(w.id)}
-                        className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-slate-700"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
-                    No writeups found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Event</TableHead>
+              <TableHead className="hidden md:table-cell">Category</TableHead>
+              <TableHead className="hidden md:table-cell">Date</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((w) => (
+              <TableRow key={w.id}>
+                <TableCell className="font-medium">{w.title}</TableCell>
+                <TableCell className="text-muted-foreground">{w.event}</TableCell>
+                <TableCell className="hidden md:table-cell"><Badge variant="secondary">{w.category}</Badge></TableCell>
+                <TableCell className="hidden md:table-cell text-muted-foreground">{w.date}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(w)}><Pencil size={14} /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(w.id)} className="text-destructive hover:text-destructive"><Trash2 size={14} /></Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {filtered.length === 0 && (
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No writeups found</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   )
 }
