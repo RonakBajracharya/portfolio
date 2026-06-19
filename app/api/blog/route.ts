@@ -3,6 +3,7 @@ import { getBlogPosts, createBlogPost } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { marked } from "marked"
 import type { BlogPost } from "@/lib/db"
+import { revalidatePath } from "next/cache"
 
 const isHtml = (s: string) => /<\/[a-z][a-z0-9]*>/i.test(s)
 
@@ -20,5 +21,7 @@ export async function POST(request: Request) {
   if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: 401 })
   const body = await request.json()
   const post = await createBlogPost(body)
+  revalidatePath("/")
+  revalidatePath("/blog")
   return NextResponse.json(render(post), { status: 201 })
 }

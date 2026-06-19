@@ -4,6 +4,7 @@ import Link from "next/link"
 
 interface Project {
   id: string
+  slug: string
   title: string
   description: string
   link: string
@@ -29,7 +30,7 @@ export default function ProjectsList({
       {projects.map((p) => (
         <Link
           key={p.id}
-          href={`/projects/${p.id}`}
+          href={`/projects/${p.slug}`}
           className="block border border-border rounded-xl p-6 hover:border-foreground/10 transition-all bg-background group"
         >
           <h2 className="text-xl font-semibold mb-2 group-hover:text-muted-foreground transition-colors">

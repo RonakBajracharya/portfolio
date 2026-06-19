@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar } from "lucide-react";
-import { getBlogPostById } from "@/lib/db";
+import { getBlogPostBySlug } from "@/lib/db";
 
 interface Post {
   id: string;
+  slug: string;
   title: string;
   summary: string;
   content: string;
@@ -15,10 +16,10 @@ interface Post {
 export default async function BlogDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
-  const post: Post | null = await getBlogPostById(id);
+  const { slug } = await params;
+  const post: Post | null = await getBlogPostBySlug(slug);
 
   if (!post) {
     notFound();

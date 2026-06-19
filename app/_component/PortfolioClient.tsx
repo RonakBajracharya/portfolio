@@ -317,10 +317,10 @@ export default function PortfolioClient({
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {projects.slice(0, 3).map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/projects/${p.id}`}
-                  className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all bg-background group cursor-pointer"
+<Link
+                   key={p.id}
+                   href={`/projects/${p.slug}`}
+                   className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all bg-background group cursor-pointer"
                 >
                   <h3 className="font-semibold mb-2 group-hover:text-muted-foreground transition-colors">
                     {p.title}
@@ -363,10 +363,10 @@ export default function PortfolioClient({
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {blogPosts.slice(0, 3).map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/blog/${p.id}`}
-                  className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group"
+<Link
+                   key={p.id}
+                   href={`/blog/${p.slug}`}
+                   className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group"
                 >
                   {p.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
@@ -411,10 +411,10 @@ export default function PortfolioClient({
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {writeups.slice(0, 3).map((w) => (
-                <Link
-                  key={w.id}
-                  href={`/writeups/${w.id}`}
-                  className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group"
+<Link
+                   key={w.id}
+                   href={`/writeups/${w.slug}`}
+                   className="block border border-border rounded-xl p-5 hover:border-foreground/10 transition-all duration-300 bg-background group"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs px-2 py-0.5 bg-secondary text-muted-foreground rounded">

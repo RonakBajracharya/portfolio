@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 
 interface Writeup {
   id: string
+  slug: string
   title: string
   summary: string
   content: string
@@ -120,7 +121,7 @@ export default function WriteupsClient({
                 {items.map((w) => (
                   <Link
                     key={w.id}
-                    href={`/writeups/${w.id}`}
+                    href={`/writeups/${w.slug}`}
                     className="border border-border rounded-xl p-5 hover:border-foreground/10 transition-all bg-background group"
                   >
                     <div className="flex items-center gap-2 mb-3">

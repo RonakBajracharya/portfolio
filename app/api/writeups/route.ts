@@ -3,6 +3,7 @@ import { getWriteups, createWriteup } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { marked } from "marked"
 import type { Writeup } from "@/lib/db"
+import { revalidatePath } from "next/cache"
 
 function isHtml(str: string): boolean {
   return /<\/[a-z][a-z0-9]*>/i.test(str)
@@ -22,11 +23,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const auth = await requireAuth()
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: 401 })
-  }
-
+  if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: 401 })
   const body = await request.json()
   const writeup = await createWriteup(body)
+  revalidatePath("/")
+  revalidatePath("/writeups")
   return NextResponse.json(renderContent(writeup), { status: 201 })
 }

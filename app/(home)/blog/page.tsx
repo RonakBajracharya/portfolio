@@ -4,6 +4,7 @@ import { getBlogPosts } from "@/lib/db"
 
 interface Post {
   id: string
+  slug: string
   title: string
   summary: string
   content: string
@@ -47,7 +48,7 @@ export default async function BlogPage() {
               posts.map((p) => (
                 <Link
                   key={p.id}
-                  href={`/blog/${p.id}`}
+                  href={`/blog/${p.slug}`}
                   className="block border border-border rounded-xl p-6 hover:border-foreground/10 transition-all bg-background group"
                 >
                   {/* Meta */}

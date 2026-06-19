@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar, ExternalLink } from "lucide-react";
-import { getProjectById } from "@/lib/db";
+import { getProjectBySlug } from "@/lib/db";
 
 interface Project {
   id: string;
+  slug: string;
   title: string;
   description: string;
   link: string;
@@ -15,10 +16,10 @@ interface Project {
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
-  const project: Project | null = await getProjectById(id);
+  const { slug } = await params;
+  const project: Project | null = await getProjectBySlug(slug);
 
   if (!project) {
     notFound();

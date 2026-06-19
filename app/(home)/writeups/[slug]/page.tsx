@@ -7,6 +7,7 @@ import { Calendar, Tag } from "lucide-react";
 
 interface W {
   id: string;
+  slug: string;
   title: string;
   event: string;
   category: string;
@@ -22,7 +23,7 @@ export default function WriteupDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/writeups/${p.id}`)
+    fetch(`/api/writeups/${p.slug}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) setW(null);
@@ -30,7 +31,7 @@ export default function WriteupDetail() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [p.id]);
+  }, [p.slug]);
 
   if (loading)
     return (

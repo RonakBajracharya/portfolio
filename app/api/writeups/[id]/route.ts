@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { getWriteupById, updateWriteup, deleteWriteup } from "@/lib/db"
+import { getWriteupById, getWriteupBySlug, updateWriteup, deleteWriteup } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { marked } from "marked"
 import type { Writeup } from "@/lib/db"
+import { revalidatePath } from "next/cache"
 
 function isHtml(str: string): boolean {
   return /<\/[a-z][a-z0-9]*>/i.test(str)
@@ -20,10 +21,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const writeup = await getWriteupById(id)
-  if (!writeup) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
+  let writeup = await getWriteupBySlug(id)
+  if (!writeup) writeup = await getWriteupById(id)
+  if (!writeup) return NextResponse.json({ error: "Not found" }, { status: 404 })
   return NextResponse.json(renderContent(writeup))
 }
 
@@ -32,16 +32,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAuth()
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: 401 })
-  }
-
+  if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: 401 })
   const { id } = await params
   const body = await request.json()
   const updated = await updateWriteup(id, body)
-  if (!updated) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
+  if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  revalidatePath("/")
+  revalidatePath("/writeups")
+  revalidatePath(`/writeups/${updated.slug}`)
   return NextResponse.json(renderContent(updated))
 }
 
@@ -50,14 +48,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAuth()
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: 401 })
-  }
-
+  if (!auth.authorized) return NextResponse.json({ error: auth.error }, { status: 401 })
   const { id } = await params
-  const deleted = await deleteWriteup(id)
-  if (!deleted) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
+  await deleteWriteup(id)
+  revalidatePath("/")
+  revalidatePath("/writeups")
   return NextResponse.json({ message: "Deleted" })
 }

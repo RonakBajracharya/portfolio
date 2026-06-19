@@ -2,6 +2,15 @@ import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
 let _initialized = false
 
 async function initDatabase() {
@@ -17,6 +26,7 @@ async function initDatabase() {
   await sql`
     CREATE TABLE IF NOT EXISTS writeups (
       id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
       title TEXT NOT NULL,
       event TEXT NOT NULL,
       category TEXT NOT NULL,
@@ -50,8 +60,8 @@ async function initDatabase() {
   if (wCount[0] && (wCount[0] as { count: number }).count === 0) {
     for (const w of defaultWriteups) {
       await sql`
-        INSERT INTO writeups (id, title, event, category, date, summary, content, tags, created_at, updated_at)
-        VALUES (${w.id}, ${w.title}, ${w.event}, ${w.category}, ${w.date}, ${w.summary}, ${w.content}, ${JSON.stringify(w.tags)}, ${w.createdAt}, ${w.updatedAt})
+        INSERT INTO writeups (id, slug, title, event, category, date, summary, content, tags, created_at, updated_at)
+        VALUES (${w.id}, ${w.slug}, ${w.title}, ${w.event}, ${w.category}, ${w.date}, ${w.summary}, ${w.content}, ${JSON.stringify(w.tags)}, ${w.createdAt}, ${w.updatedAt})
       `
     }
   }
@@ -69,6 +79,7 @@ async function initDatabase() {
   await sql`
     CREATE TABLE IF NOT EXISTS blog (
       id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
       title TEXT NOT NULL,
       summary TEXT NOT NULL,
       content TEXT NOT NULL,
@@ -83,8 +94,8 @@ async function initDatabase() {
   if (bCount[0] && (bCount[0] as { count: number }).count === 0) {
     for (const b of defaultBlogPosts) {
       await sql`
-        INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at)
-        VALUES (${b.id}, ${b.title}, ${b.summary}, ${b.content}, ${JSON.stringify(b.tags)}, ${b.date}, ${b.createdAt}, ${b.updatedAt})
+        INSERT INTO blog (id, slug, title, summary, content, tags, date, created_at, updated_at)
+        VALUES (${b.id}, ${b.slug}, ${b.title}, ${b.summary}, ${b.content}, ${JSON.stringify(b.tags)}, ${b.date}, ${b.createdAt}, ${b.updatedAt})
       `
     }
   }
@@ -104,6 +115,7 @@ async function initDatabase() {
   await sql`
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
       link TEXT NOT NULL DEFAULT '',
@@ -118,11 +130,13 @@ async function initDatabase() {
   if (pCount[0] && (pCount[0] as { count: number }).count === 0) {
     for (const p of defaultProjects) {
       await sql`
-        INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at)
-        VALUES (${p.id}, ${p.title}, ${p.description}, ${p.link}, ${JSON.stringify(p.tags)}, ${p.date}, ${p.createdAt}, ${p.updatedAt})
+        INSERT INTO projects (id, slug, title, description, link, tags, date, created_at, updated_at)
+        VALUES (${p.id}, ${p.slug}, ${p.title}, ${p.description}, ${p.link}, ${JSON.stringify(p.tags)}, ${p.date}, ${p.createdAt}, ${p.updatedAt})
       `
     }
   }
+
+  await migrateSlugs()
 }
 
 // ---- Types ----
@@ -192,6 +206,7 @@ export interface SiteConfig {
 
 export interface Writeup {
   id: string
+  slug: string
   title: string
   event: string
   category: string
@@ -372,6 +387,7 @@ export const defaultSiteConfig: SiteConfig = {
 const defaultWriteups: Writeup[] = [
   {
     id: "1",
+    slug: "web-exploitation-sql-injection-deep-dive",
     title: "Web Exploitation: SQL Injection Deep Dive",
     event: "KU CTF 2024",
     category: "Web",
@@ -421,6 +437,7 @@ The extracted admin password revealed the flag: \`KUCTF{bl1nd_sql1_1s_st1ll_r3l3
   },
   {
     id: "2",
+    slug: "reverse-engineering-binary-patching",
     title: "Reverse Engineering: Binary Patching",
     event: "INTIGRITI CTF 2024",
     category: "Reverse Engineering",
@@ -465,6 +482,7 @@ After patching and running the binary, the flag was displayed: \`INTIGRITI{p4tch
   },
   {
     id: "3",
+    slug: "forensics-memory-dump-analysis",
     title: "Forensics: Memory Dump Analysis",
     event: "L34K CTF 2025",
     category: "Forensics",
@@ -541,6 +559,7 @@ const defaultGallery: GalleryItem[] = [
 
 type DbWriteup = {
   id: string
+  slug: string
   title: string
   event: string
   category: string
@@ -561,6 +580,49 @@ type DbGalleryRow = {
   date: string
   created_at: string
   updated_at: string
+}
+
+// ---- Slug Migration ----
+
+async function migrateSlugs() {
+  try {
+    const blogCols = await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'blog' AND column_name = 'slug'`
+    if (blogCols.length === 0) {
+      await sql`ALTER TABLE blog ADD COLUMN slug TEXT UNIQUE`
+      const blogRows = await sql`SELECT id, title FROM blog` as Record<string, unknown>[]
+      for (const row of blogRows) {
+        const s = slugify(row.title as string)
+        await sql`UPDATE blog SET slug = ${s} WHERE id = ${row.id}`
+      }
+      await sql`ALTER TABLE blog ALTER COLUMN slug SET NOT NULL`
+    }
+  } catch { /* already migrated */ }
+
+  try {
+    const wCols = await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'writeups' AND column_name = 'slug'`
+    if (wCols.length === 0) {
+      await sql`ALTER TABLE writeups ADD COLUMN slug TEXT UNIQUE`
+      const wRows = await sql`SELECT id, title FROM writeups` as Record<string, unknown>[]
+      for (const row of wRows) {
+        const s = slugify(row.title as string)
+        await sql`UPDATE writeups SET slug = ${s} WHERE id = ${row.id}`
+      }
+      await sql`ALTER TABLE writeups ALTER COLUMN slug SET NOT NULL`
+    }
+  } catch { /* already migrated */ }
+
+  try {
+    const pCols = await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'slug'`
+    if (pCols.length === 0) {
+      await sql`ALTER TABLE projects ADD COLUMN slug TEXT UNIQUE`
+      const pRows = await sql`SELECT id, title FROM projects` as Record<string, unknown>[]
+      for (const row of pRows) {
+        const s = slugify(row.title as string)
+        await sql`UPDATE projects SET slug = ${s} WHERE id = ${row.id}`
+      }
+      await sql`ALTER TABLE projects ALTER COLUMN slug SET NOT NULL`
+    }
+  } catch { /* already migrated */ }
 }
 
 // =====================================================
@@ -592,51 +654,68 @@ export async function updateSiteConfig(config: SiteConfig): Promise<void> {
 
 // ---- Writeups ----
 
+function mapWriteup(r: DbWriteup): Writeup {
+  return {
+    id: r.id, slug: r.slug, title: r.title, event: r.event, category: r.category,
+    date: r.date, summary: r.summary, content: r.content,
+    tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    createdAt: r.created_at, updatedAt: r.updated_at,
+  }
+}
+
+async function ensureUniqueSlug(table: "writeups" | "blog" | "projects", slug: string, excludeId?: string): Promise<string> {
+  let candidate = slug
+  let suffix = 1
+  while (true) {
+    let rows: Record<string, unknown>[]
+    if (table === "writeups") {
+      rows = excludeId
+        ? await sql`SELECT id FROM writeups WHERE slug = ${candidate} AND id != ${excludeId}` as Record<string, unknown>[]
+        : await sql`SELECT id FROM writeups WHERE slug = ${candidate}` as Record<string, unknown>[]
+    } else if (table === "blog") {
+      rows = excludeId
+        ? await sql`SELECT id FROM blog WHERE slug = ${candidate} AND id != ${excludeId}` as Record<string, unknown>[]
+        : await sql`SELECT id FROM blog WHERE slug = ${candidate}` as Record<string, unknown>[]
+    } else {
+      rows = excludeId
+        ? await sql`SELECT id FROM projects WHERE slug = ${candidate} AND id != ${excludeId}` as Record<string, unknown>[]
+        : await sql`SELECT id FROM projects WHERE slug = ${candidate}` as Record<string, unknown>[]
+    }
+    if (rows.length === 0) return candidate
+    candidate = `${slug}-${suffix++}`
+  }
+}
+
 export async function getWriteups(): Promise<Writeup[]> {
   await initDatabase()
   const rows = await sql`SELECT * FROM writeups ORDER BY created_at DESC` as Record<string, unknown>[]
-  return (rows as DbWriteup[]).map((r) => ({
-    id: r.id,
-    title: r.title,
-    event: r.event,
-    category: r.category,
-    date: r.date,
-    summary: r.summary,
-    content: r.content,
-    tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  }))
+  return (rows as DbWriteup[]).map(mapWriteup)
 }
 
 export async function getWriteupById(id: string): Promise<Writeup | null> {
   await initDatabase()
   const rows = await sql`SELECT * FROM writeups WHERE id = ${id}` as Record<string, unknown>[]
   if (rows.length === 0) return null
-  const r = rows[0] as DbWriteup
-  return {
-    id: r.id,
-    title: r.title,
-    event: r.event,
-    category: r.category,
-    date: r.date,
-    summary: r.summary,
-    content: r.content,
-    tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  }
+  return mapWriteup(rows[0] as DbWriteup)
 }
 
-export async function createWriteup(data: Omit<Writeup, "id" | "createdAt" | "updatedAt">): Promise<Writeup> {
+export async function getWriteupBySlug(slug: string): Promise<Writeup | null> {
+  await initDatabase()
+  const rows = await sql`SELECT * FROM writeups WHERE slug = ${slug}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  return mapWriteup(rows[0] as DbWriteup)
+}
+
+export async function createWriteup(data: Omit<Writeup, "id" | "slug" | "createdAt" | "updatedAt">): Promise<Writeup> {
   const now = new Date().toISOString()
   const id = String(Date.now())
+  const slug = await ensureUniqueSlug("writeups", slugify(data.title))
   await initDatabase()
   await sql`
-    INSERT INTO writeups (id, title, event, category, date, summary, content, tags, created_at, updated_at)
-    VALUES (${id}, ${data.title}, ${data.event}, ${data.category}, ${data.date}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${now}, ${now})
+    INSERT INTO writeups (id, slug, title, event, category, date, summary, content, tags, created_at, updated_at)
+    VALUES (${id}, ${slug}, ${data.title}, ${data.event}, ${data.category}, ${data.date}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${now}, ${now})
   `
-  return { ...data, id, tags: data.tags, createdAt: now, updatedAt: now }
+  return { ...data, id, slug, tags: data.tags, createdAt: now, updatedAt: now }
 }
 
 export async function updateWriteup(id: string, updates: Partial<Writeup>): Promise<Writeup | null> {
@@ -644,10 +723,11 @@ export async function updateWriteup(id: string, updates: Partial<Writeup>): Prom
   await initDatabase()
   const existing = await getWriteupById(id)
   if (!existing) return null
-  const merged = { ...existing, ...updates, updatedAt: now }
+  const slug = updates.title ? await ensureUniqueSlug("writeups", slugify(updates.title), id) : existing.slug
+  const merged = { ...existing, ...updates, slug, updatedAt: now }
   await sql`
     UPDATE writeups SET
-      title = ${merged.title}, event = ${merged.event}, category = ${merged.category},
+      slug = ${merged.slug}, title = ${merged.title}, event = ${merged.event}, category = ${merged.category},
       date = ${merged.date}, summary = ${merged.summary}, content = ${merged.content},
       tags = ${JSON.stringify(merged.tags)}, updated_at = ${now}
     WHERE id = ${id}
@@ -732,6 +812,7 @@ export async function deleteGalleryItem(id: string): Promise<boolean> {
 
 export interface BlogPost {
   id: string
+  slug: string
   title: string
   summary: string
   content: string
@@ -744,6 +825,7 @@ export interface BlogPost {
 const defaultBlogPosts: BlogPost[] = [
   {
     id: "b1",
+    slug: "getting-started-in-cybersecurity",
     title: "Getting Started in Cybersecurity",
     summary: "A beginner's guide to breaking into the cybersecurity field — what to learn first, certifications, and building a home lab.",
     content: "<p>Cybersecurity is one of the fastest-growing fields in tech, and for good reason — every organization needs security professionals. Here's how to start.</p><h2>Learn the Fundamentals</h2><p>Start with networking basics (TCP/IP, DNS, HTTP), operating systems (Linux especially), and basic programming (Python). These fundamentals will serve you throughout your career.</p><h2>Build a Home Lab</h2><p>Set up virtual machines, practice with Kali Linux, and use platforms like TryHackMe and HackTheBox. Hands-on experience is more valuable than any certification.</p><h2>Get Certified</h2><p>Start with CompTIA Security+, then move to specialized certs like OSCP or CISSP depending on your focus area.</p>",
@@ -754,6 +836,7 @@ const defaultBlogPosts: BlogPost[] = [
   },
   {
     id: "b2",
+    slug: "why-privacy-matters-in-the-age-of-ai",
     title: "Why Privacy Matters in the Age of AI",
     summary: "As AI systems become more powerful, protecting personal data and understanding privacy implications is critical for security professionals.",
     content: "<p>AI models are trained on massive datasets — often containing personal information. As security professionals, we need to understand the privacy implications.</p><h2>Data Collection</h2><p>Most AI systems collect far more data than necessary. Understanding what data is being collected and how it's used is the first step to protecting privacy.</p><h2>Practical Steps</h2><p>Use encryption everywhere, minimize data collection, implement proper access controls, and stay informed about privacy regulations like GDPR and CCPA.</p>",
@@ -767,8 +850,8 @@ const defaultBlogPosts: BlogPost[] = [
 export async function getBlogPosts(): Promise<BlogPost[]> {
   await initDatabase()
   const rows = await sql`SELECT * FROM blog ORDER BY created_at DESC` as Record<string, unknown>[]
-  return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
-    id: r.id as string, title: r.title as string, summary: r.summary as string,
+  return (rows as { slug: string; tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
+    id: r.id as string, slug: r.slug as string, title: r.title as string, summary: r.summary as string,
     content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
     date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
   }))
@@ -778,20 +861,33 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   await initDatabase()
   const rows = await sql`SELECT * FROM blog WHERE id = ${id}` as Record<string, unknown>[]
   if (rows.length === 0) return null
-  const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+  const r = rows[0] as { slug: string; tags: string; created_at: string; updated_at: string; [k: string]: unknown }
   return {
-    id: r.id as string, title: r.title as string, summary: r.summary as string,
+    id: r.id as string, slug: r.slug as string, title: r.title as string, summary: r.summary as string,
     content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
     date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
   }
 }
 
-export async function createBlogPost(data: Omit<BlogPost, "id" | "createdAt" | "updatedAt">): Promise<BlogPost> {
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  await initDatabase()
+  const rows = await sql`SELECT * FROM blog WHERE slug = ${slug}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as { slug: string; tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+  return {
+    id: r.id as string, slug: r.slug as string, title: r.title as string, summary: r.summary as string,
+    content: r.content as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  }
+}
+
+export async function createBlogPost(data: Omit<BlogPost, "id" | "slug" | "createdAt" | "updatedAt">): Promise<BlogPost> {
   const now = new Date().toISOString()
   const id = "b" + String(Date.now())
+  const slug = await ensureUniqueSlug("blog", slugify(data.title))
   await initDatabase()
-  await sql`INSERT INTO blog (id, title, summary, content, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
-  return { ...data, id, createdAt: now, updatedAt: now }
+  await sql`INSERT INTO blog (id, slug, title, summary, content, tags, date, created_at, updated_at) VALUES (${id}, ${slug}, ${data.title}, ${data.summary}, ${data.content}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
+  return { ...data, id, slug, createdAt: now, updatedAt: now }
 }
 
 export async function updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost | null> {
@@ -799,8 +895,9 @@ export async function updateBlogPost(id: string, updates: Partial<BlogPost>): Pr
   await initDatabase()
   const existing = await getBlogPostById(id)
   if (!existing) return null
-  const merged = { ...existing, ...updates, updatedAt: now }
-  await sql`UPDATE blog SET title = ${merged.title}, summary = ${merged.summary}, content = ${merged.content}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
+  const slug = updates.title ? await ensureUniqueSlug("blog", slugify(updates.title), id) : existing.slug
+  const merged = { ...existing, ...updates, slug, updatedAt: now }
+  await sql`UPDATE blog SET slug = ${merged.slug}, title = ${merged.title}, summary = ${merged.summary}, content = ${merged.content}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
   return merged
 }
 
@@ -868,6 +965,7 @@ export async function deleteMessage(id: string): Promise<boolean> {
 
 export interface Project {
   id: string
+  slug: string
   title: string
   description: string
   link: string
@@ -880,6 +978,7 @@ export interface Project {
 const defaultProjects: Project[] = [
   {
     id: "p1",
+    slug: "quantum-resistant-cryptographic-system",
     title: "Quantum Resistant Cryptographic System",
     description: "Researched and developed a prototype cryptographic system using quantum-resistant key exchange protocols to secure communications against post-quantum threats.",
     link: "",
@@ -890,6 +989,7 @@ const defaultProjects: Project[] = [
   },
   {
     id: "p2",
+    slug: "secure-network-architecture-with-vpn",
     title: "Secure Network Architecture with VPN",
     description: "Designed and implemented a secure network architecture with VPN integration, advanced routing protocols, and intrusion detection systems.",
     link: "",
@@ -900,6 +1000,7 @@ const defaultProjects: Project[] = [
   },
   {
     id: "p3",
+    slug: "malware-analysis-and-exploit-development",
     title: "Malware Analysis & Exploit Development",
     description: "Static and dynamic malware analysis with vulnerability research and exploit development for educational purposes in controlled environments.",
     link: "",
@@ -913,8 +1014,8 @@ const defaultProjects: Project[] = [
 export async function getProjects(): Promise<Project[]> {
   await initDatabase()
   const rows = await sql`SELECT * FROM projects ORDER BY created_at DESC` as Record<string, unknown>[]
-  return (rows as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
-    id: r.id as string, title: r.title as string, description: r.description as string,
+  return (rows as { slug: string; tags: string; created_at: string; updated_at: string; [k: string]: unknown }[]).map((r) => ({
+    id: r.id as string, slug: r.slug as string, title: r.title as string, description: r.description as string,
     link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
     date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
   }))
@@ -924,20 +1025,33 @@ export async function getProjectById(id: string): Promise<Project | null> {
   await initDatabase()
   const rows = await sql`SELECT * FROM projects WHERE id = ${id}` as Record<string, unknown>[]
   if (rows.length === 0) return null
-  const r = rows[0] as { tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+  const r = rows[0] as { slug: string; tags: string; created_at: string; updated_at: string; [k: string]: unknown }
   return {
-    id: r.id as string, title: r.title as string, description: r.description as string,
+    id: r.id as string, slug: r.slug as string, title: r.title as string, description: r.description as string,
     link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
     date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
   }
 }
 
-export async function createProject(data: Omit<Project, "id" | "createdAt" | "updatedAt">): Promise<Project> {
+export async function getProjectBySlug(slug: string): Promise<Project | null> {
+  await initDatabase()
+  const rows = await sql`SELECT * FROM projects WHERE slug = ${slug}` as Record<string, unknown>[]
+  if (rows.length === 0) return null
+  const r = rows[0] as { slug: string; tags: string; created_at: string; updated_at: string; [k: string]: unknown }
+  return {
+    id: r.id as string, slug: r.slug as string, title: r.title as string, description: r.description as string,
+    link: r.link as string, tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+    date: r.date as string, createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  }
+}
+
+export async function createProject(data: Omit<Project, "id" | "slug" | "createdAt" | "updatedAt">): Promise<Project> {
   const now = new Date().toISOString()
   const id = "p" + String(Date.now())
+  const slug = await ensureUniqueSlug("projects", slugify(data.title))
   await initDatabase()
-  await sql`INSERT INTO projects (id, title, description, link, tags, date, created_at, updated_at) VALUES (${id}, ${data.title}, ${data.description}, ${data.link}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
-  return { ...data, id, createdAt: now, updatedAt: now }
+  await sql`INSERT INTO projects (id, slug, title, description, link, tags, date, created_at, updated_at) VALUES (${id}, ${slug}, ${data.title}, ${data.description}, ${data.link}, ${JSON.stringify(data.tags)}, ${data.date}, ${now}, ${now})`
+  return { ...data, id, slug, createdAt: now, updatedAt: now }
 }
 
 export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
@@ -945,8 +1059,9 @@ export async function updateProject(id: string, updates: Partial<Project>): Prom
   await initDatabase()
   const existing = await getProjectById(id)
   if (!existing) return null
-  const merged = { ...existing, ...updates, updatedAt: now }
-  await sql`UPDATE projects SET title = ${merged.title}, description = ${merged.description}, link = ${merged.link}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
+  const slug = updates.title ? await ensureUniqueSlug("projects", slugify(updates.title), id) : existing.slug
+  const merged = { ...existing, ...updates, slug, updatedAt: now }
+  await sql`UPDATE projects SET slug = ${merged.slug}, title = ${merged.title}, description = ${merged.description}, link = ${merged.link}, tags = ${JSON.stringify(merged.tags)}, date = ${merged.date}, updated_at = ${now} WHERE id = ${id}`
   return merged
 }
 
